@@ -1,15 +1,13 @@
 package com.xmbest.screen.settings
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.ChipDefaults
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FilterChip
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -27,20 +25,31 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
         title = viewModel.getString("theme.setting"),
         modifier = Modifier.fillMaxWidth().padding(start = 6.dp, top = 6.dp)
     ) {
-        Row {
-            viewModel.themeList.forEach { item ->
-                FilterChip(
+        SingleChoiceSegmentedButtonRow {
+            viewModel.themeList.forEachIndexed { index, item ->
+                SegmentedButton(
                     selected = item.second == uiState.theme,
                     onClick = { viewModel.onEvent(SettingsUiEvent.UpdateTheme(item.second)) },
-                    content = { Text(item.first) },
-                    colors = ChipDefaults.filterChipColors(
-                        selectedContentColor = MaterialTheme.colors.onPrimary,
-                        selectedBackgroundColor = MaterialTheme.colors.primary,
-                        contentColor = MaterialTheme.colors.onSurface,
-                        backgroundColor = MaterialTheme.colors.surface
+                    label = {
+                        Text(
+                            item.first,
+                            color = if (item.second == uiState.theme)
+                                MaterialTheme.colors.onPrimary
+                            else
+                                MaterialTheme.colors.onSurface
+                        )
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = viewModel.themeList.size
+                    ),
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colors.primary,
+                        activeContentColor = MaterialTheme.colors.onPrimary,
+                        inactiveContainerColor = MaterialTheme.colors.surface,
+                        inactiveContentColor = MaterialTheme.colors.onSurface
                     )
                 )
-                Spacer(modifier = Modifier.width(4.dp))
             }
         }
     }
@@ -49,20 +58,31 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
         title = viewModel.getString("adb.config"),
         modifier = Modifier.fillMaxWidth().padding(start = 6.dp, top = 6.dp)
     ) {
-        Row{
-            viewModel.envList.forEach { item ->
-                FilterChip(
+        SingleChoiceSegmentedButtonRow {
+            viewModel.envList.forEachIndexed { index, item ->
+                SegmentedButton(
                     selected = item.second.path == uiState.adbPAth,
                     onClick = { viewModel.onEvent(SettingsUiEvent.UpdateAdbEnv(item.second)) },
-                    content = { Text(item.first) },
-                    colors = ChipDefaults.filterChipColors(
-                        selectedContentColor = MaterialTheme.colors.onPrimary,
-                        selectedBackgroundColor = MaterialTheme.colors.primary,
-                        contentColor = MaterialTheme.colors.onSurface,
-                        backgroundColor = MaterialTheme.colors.surface
+                    label = {
+                        Text(
+                            item.first,
+                            color = if (item.second.path == uiState.adbPAth)
+                                MaterialTheme.colors.onPrimary
+                            else
+                                MaterialTheme.colors.onSurface
+                        )
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = viewModel.themeList.size
+                    ),
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colors.primary,
+                        activeContentColor = MaterialTheme.colors.onPrimary,
+                        inactiveContainerColor = MaterialTheme.colors.surface,
+                        inactiveContentColor = MaterialTheme.colors.onSurface,
                     )
                 )
-                Spacer(modifier = Modifier.width(4.dp))
             }
         }
     }

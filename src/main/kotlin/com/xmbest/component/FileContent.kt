@@ -1,6 +1,5 @@
 package com.xmbest.component
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -58,7 +57,7 @@ fun FileContent() {
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "目录",
                     color = MaterialTheme.colors.primary,
@@ -82,8 +81,7 @@ fun FileContent() {
                 Text(
                     text = "2019-01-01 17:35",
                     color = MaterialTheme.colors.onBackground,
-                    style = TextStyle.Default.copy(fontSize = 14.sp),
-                    modifier = Modifier.align(alignment = Alignment.Bottom)
+                    style = TextStyle.Default.copy(fontSize = 14.sp)
                 )
             }
         }

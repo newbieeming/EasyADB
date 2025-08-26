@@ -12,21 +12,23 @@ val appName by extra("EasyADB")
 val appVersion by extra("1.0.0")
 
 repositories {
-    mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    mavenLocal()
     maven("https://maven.aliyun.com/repository/public/")
     maven("https://maven.aliyun.com/repository/central")
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    mavenCentral()
     google()
 }
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation(compose.material3)
+    implementation(compose.materialIconsExtended)
     implementation("com.alibaba.fastjson2:fastjson2-kotlin:${properties["fastjson2.version"]}")
     implementation("com.android.tools.ddms:ddmlib:${properties["ddmlib.version"]}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${properties["kotlin.version"]}")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${properties["kotlin.version"]}")
     implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:${properties["lifecycle.viewmodel.compose.version"]}")
-    implementation("androidx.compose.material:material-icons-extended:${properties["material.icons.extended.version"]}")
     implementation(project(":ddmlib"))
     testImplementation(kotlin("test"))
 }
