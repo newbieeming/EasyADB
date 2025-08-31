@@ -6,6 +6,8 @@ import com.xmbest.base.BaseViewModel
 import com.xmbest.ddmlib.DeviceManager
 import com.xmbest.model.Environment
 import com.xmbest.model.Theme
+import com.xmbest.theme.blue
+import com.xmbest.theme.purple
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -14,9 +16,11 @@ import kotlinx.coroutines.launch
 class SettingsViewModel : BaseViewModel<SettingsUiState>() {
 
     val themeList = listOf(
-        Pair(getString("theme.light"), Theme.Light),
-        Pair(getString("theme.night"), Theme.Dark),
-        Pair(getString("theme.system"), Theme.System)
+        Theme.System,
+        Theme.Light,
+        Theme.Night,
+        Theme.Other(getString("theme.blue"), blue),
+        Theme.Other(getString("theme.purple"), purple)
     )
 
     val envList = listOf(

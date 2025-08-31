@@ -27,7 +27,7 @@ fun RouterScreen(viewModel: RouterViewModule = viewModel()) {
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
             Left(modifier = Modifier.fillMaxHeight().width(240.dp), uiState)
-            Right(modifier = Modifier.padding(end = 1.dp).fillMaxHeight().weight(1f), uiState)
+            Right(modifier = Modifier.fillMaxHeight().weight(1f), uiState)
         }
     }
 }

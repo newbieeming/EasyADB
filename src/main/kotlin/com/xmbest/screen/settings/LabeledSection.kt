@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun TitleContent(title: String, modifier: Modifier, comp: @Composable () -> Unit) {
+fun LabeledSection(title: String, modifier: Modifier, comp: @Composable () -> Unit) {
     Column(modifier) {
         Text(title, color = MaterialTheme.colors.onBackground)
         Spacer(modifier = Modifier.height(4.dp))

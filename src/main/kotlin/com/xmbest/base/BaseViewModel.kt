@@ -8,9 +8,9 @@ import kotlinx.coroutines.flow.asStateFlow
 
 abstract class BaseViewModel<T> : ViewModel() {
     protected val strings =
-        PropertiesLocalization.Companion.create(Config.STRINGS_NAME, Config.locale.value)
+        PropertiesLocalization.create(Config.STRINGS_NAME)
 
-    abstract val _uiState: MutableStateFlow<T>
+    protected abstract val _uiState: MutableStateFlow<T>
     val uiState by lazy { _uiState.asStateFlow() }
 
     fun getString(key: String) = strings.get(key)

@@ -3,7 +3,7 @@ package com.xmbest.theme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 
-val Blue = lightColors(
+val blue = lightColors(
     primary = blue_primary,
     onPrimary = blue_onPrimary,
     secondary = blue_background,
@@ -14,7 +14,7 @@ val Blue = lightColors(
     onBackground = blue_onBackground
 )
 
-val Classic = lightColors(
+val light = lightColors(
     primary = classic_primary,
     onPrimary = classic_onPrimary,
     secondary = classic_second,
@@ -25,7 +25,7 @@ val Classic = lightColors(
     onBackground = classic_onBackground
 )
 
-val Night = darkColors(
+val night = darkColors(
     primary = night_primary,
     onPrimary = night_onPrimary,
     secondary = night_second,
@@ -36,7 +36,7 @@ val Night = darkColors(
     onBackground = night_onBackground
 )
 
-val Purple = lightColors(
+val purple = lightColors(
     primary = purple_primary,
     onPrimary = purple_onPrimary,
     secondary = purple_background,

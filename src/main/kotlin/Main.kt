@@ -7,6 +7,7 @@ import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.xmbest.Config
+import com.xmbest.model.Theme
 import com.xmbest.module.InitModule
 import com.xmbest.screen.router.RouterScreen
 
@@ -15,14 +16,14 @@ import com.xmbest.screen.router.RouterScreen
 @Preview
 fun App() {
 
-    val isDart = Config.isDart.collectAsState()
+    val theme = Config.theme.collectAsState().value
 
     MaterialTheme(
         colors =
-            if (isDart.value ?: isSystemInDarkTheme())
-                Config.darkColors
+            if (theme == Theme.System)
+                if (isSystemInDarkTheme()) Theme.Night.color else Theme.Light.color
             else
-                Config.lightColors
+                Config.theme.value.color
     ) {
         RouterScreen()
     }

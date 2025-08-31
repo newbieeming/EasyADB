@@ -67,7 +67,6 @@ fun FileScreen(viewModel: FileViewModel = viewModel()) {
 
     Box(
         modifier = Modifier
-            .padding(2.dp)
             .fillMaxSize()
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
@@ -101,22 +100,28 @@ fun FileScreen(viewModel: FileViewModel = viewModel()) {
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colors.primary.copy(alpha = 0.1f))
-                    .border(
-                        width = 2.dp,
-                        color = MaterialTheme.colors.primary,
-                        shape = CardShape
-                    ),
-                contentAlignment = Alignment.Center
+                    .padding(3.dp) // 添加内边距确保边框完全显示
             ) {
-                Text(
-                    text = uiState.uploadTipText,
-                    color = MaterialTheme.colors.primary,
-                    fontSize = 18.sp,
+                Box(
                     modifier = Modifier
-                        .clip(CardShape)
-                        .background(MaterialTheme.colors.surface.copy(alpha = 0.9f))
-                        .padding(16.dp)
-                )
+                        .fillMaxSize()
+                        .border(
+                            width = 2.dp,
+                            color = MaterialTheme.colors.primary,
+                            shape = CardShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = uiState.uploadTipText,
+                        color = MaterialTheme.colors.primary,
+                        fontSize = 18.sp,
+                        modifier = Modifier
+                            .clip(CardShape)
+                            .background(MaterialTheme.colors.surface.copy(alpha = 0.9f))
+                            .padding(16.dp)
+                    )
+                }
             }
         }
     }

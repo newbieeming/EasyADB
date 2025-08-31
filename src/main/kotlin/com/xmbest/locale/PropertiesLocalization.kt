@@ -1,5 +1,6 @@
 package com.xmbest.locale
 
+import com.xmbest.Config
 import java.util.Locale
 import java.util.MissingResourceException
 import java.util.ResourceBundle
@@ -28,7 +29,7 @@ class PropertiesLocalization(private val resourceBundle: ResourceBundle) {
          * @param locale 语言环境（如 Locale.CHINA）
          */
         @Throws(MissingResourceException::class)
-        fun create(baseName: String, locale: Locale = Locale.getDefault()): PropertiesLocalization {
+        fun create(baseName: String, locale: Locale = Config.locale.value): PropertiesLocalization {
             return PropertiesLocalization(ResourceBundle.getBundle(baseName, locale))
         }
     }

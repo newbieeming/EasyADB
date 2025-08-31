@@ -10,8 +10,6 @@ import androidx.compose.ui.graphics.Color
  * 表面色用于呈现抬升的表面或“纸张”，如卡片、对话框、菜单等。它通过不同的色调和阴影来模拟物理世界的深度和层次感
  */
 
-val purple = Color(0XFF9563b5)
-
 /** 蓝色主题*/
 val blue_primary = Color(0xFF4382EC)
 val blue_onPrimary = Color.White
