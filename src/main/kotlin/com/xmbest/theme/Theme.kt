@@ -11,7 +11,8 @@ val blue = lightColors(
     surface = blue_surface,
     onSurface = blue_onSurface,
     background = blue_background,
-    onBackground = blue_onBackground
+    onBackground = blue_onBackground,
+    error = error
 )
 
 val light = lightColors(
@@ -22,7 +23,8 @@ val light = lightColors(
     surface = classic_background,
     onSurface = classic_onBackground,
     background = classic_background,
-    onBackground = classic_onBackground
+    onBackground = classic_onBackground,
+    error = error
 )
 
 val night = darkColors(
@@ -33,7 +35,8 @@ val night = darkColors(
     surface = night_background,
     onSurface = night_onBackground,
     background = night_background,
-    onBackground = night_onBackground
+    onBackground = night_onBackground,
+    error = error
 )
 
 val purple = lightColors(
@@ -44,5 +47,6 @@ val purple = lightColors(
     surface = purple_surface,
     onSurface = purple_onSurface,
     background = purple_background,
-    onBackground = purple_onBackground
+    onBackground = purple_onBackground,
+    error = error
 )

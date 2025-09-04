@@ -29,6 +29,7 @@ import com.xmbest.theme.CardShape
 import com.xmbest.theme.ChipShape
 import com.xmbest.theme.TextFieldShape
 import com.xmbest.util.DialogUtil
+import com.xmbest.util.InputDialogUtil
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +38,8 @@ fun FileContent(file: FileListingService.FileEntry, viewModel: FileViewModel) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     val dialogState = LocalDialogState.current
+    
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -124,7 +127,7 @@ fun FileContent(file: FileListingService.FileEntry, viewModel: FileViewModel) {
                 ) {
                     IconButton(
                         onClick = {
-                            // TODO: 实现重命名功能
+                            showRenameDialog = true
                         },
                         modifier = Modifier.size(32.dp)
                     ) {
@@ -168,7 +171,7 @@ fun FileContent(file: FileListingService.FileEntry, viewModel: FileViewModel) {
                         onClick = {
                             DialogUtil.showWarning(
                                 dialogState = dialogState,
-                                message = viewModel.getString("file.delete.confirm").format(file.fullPath),
+                                message = viewModel.getString("file.delete.confirm").format(file.absolutePath),
                                 onConfirm = {
                                     viewModel.onEvent(FileUiEvent.DeleteFiles(listOf(file)))
                                 },
@@ -187,5 +190,21 @@ fun FileContent(file: FileListingService.FileEntry, viewModel: FileViewModel) {
                 }
             }
         }
+    }
+    
+    // 重命名对话框
+    if (showRenameDialog) {
+        InputDialogUtil.showRenameDialog(
+            dialogState = dialogState,
+            title = viewModel.getString("file.rename"),
+            currentName = file.name,
+            onConfirm = { newName ->
+                viewModel.onEvent(FileUiEvent.RenameFile(file.absolutePath, newName))
+                showRenameDialog = false
+            },
+            onCancel = {
+                showRenameDialog = false
+            }
+        )
     }
 }

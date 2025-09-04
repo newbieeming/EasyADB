@@ -8,16 +8,17 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.xmbest.FILE_SPLIT
+import com.xmbest.LocalDialogState
 import com.xmbest.ddmlib.ClipboardUtil
 import com.xmbest.theme.ButtonShape
+import com.xmbest.util.InputDialogUtil
 
 /**
  * 构建路径面包屑导航数据
@@ -58,6 +59,10 @@ private fun getParentPath(currentPath: String): String {
 fun FileHeader(viewModel: FileViewModel) {
     val uiState = viewModel.uiState.collectAsState().value
     val pathParts = buildPathParts(uiState.parentPath, viewModel.getString("file.root"))
+    val dialogState = LocalDialogState.current
+
+    var showCreateFolderDialog by remember { mutableStateOf(false) }
+    var showCreateFileDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -76,14 +81,44 @@ fun FileHeader(viewModel: FileViewModel) {
             showBackButton = uiState.parentPath != FILE_SPLIT,
             onBackClick = { viewModel.onEvent(FileUiEvent.NavigateToPath(getParentPath(uiState.parentPath))) },
             onRefreshClick = { viewModel.onEvent(FileUiEvent.Refresh) },
-            onNewFolderClick = { /* TODO: 实现创建文件夹功能 */ },
-            onNewFileClick = { /* TODO: 实现创建文件功能 */ },
+            onNewFolderClick = { showCreateFolderDialog = true },
+            onNewFileClick = { showCreateFileDialog = true },
             onImportClick = { viewModel.onEvent(FileUiEvent.Imported) },
             backLabel = viewModel.getString("file.back"),
             refreshLabel = viewModel.getString("file.refresh"),
             newFolderLabel = viewModel.getString("file.newFolder"),
             newFileLabel = viewModel.getString("file.newFile"),
             importLabel = viewModel.getString("file.importFile")
+        )
+    }
+
+    // 创建文件夹对话框
+    if (showCreateFolderDialog) {
+        InputDialogUtil.showCreateFolderDialog(
+            dialogState = dialogState,
+            title = viewModel.getString("file.newFolder"),
+            onConfirm = { folderName ->
+                viewModel.onEvent(FileUiEvent.CreateFolder(folderName))
+                showCreateFolderDialog = false
+            },
+            onCancel = {
+                showCreateFolderDialog = false
+            }
+        )
+    }
+
+    // 创建文件对话框
+    if (showCreateFileDialog) {
+        InputDialogUtil.showCreateFileDialog(
+            dialogState = dialogState,
+            title = viewModel.getString("file.newFile"),
+            onConfirm = { fileName ->
+                viewModel.onEvent(FileUiEvent.CreateFile(fileName))
+                showCreateFileDialog = false
+            },
+            onCancel = {
+                showCreateFileDialog = false
+            }
         )
     }
 }

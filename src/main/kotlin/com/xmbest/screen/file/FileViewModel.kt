@@ -60,6 +60,9 @@ class FileViewModel : BaseViewModel<FileUiState>() {
                 is FileUiEvent.UploadFiles -> handleUploadFiles(event.files, uiState.value.parentPath)
                 is FileUiEvent.DownloadFiles -> handleDownloadFiles(event.files)
                 is FileUiEvent.DeleteFiles -> handleDeleteFiles(event.files)
+                is FileUiEvent.CreateFolder -> handleCreateFolder(event.folderName)
+            is FileUiEvent.CreateFile -> handleCreateFile(event.fileName)
+            is FileUiEvent.RenameFile -> handleRenameFile(event.oldPath, event.newName)
                 is FileUiEvent.Toast -> handleToast(event.message)
             }
         }
@@ -210,7 +213,7 @@ class FileViewModel : BaseViewModel<FileUiState>() {
         withContext(Dispatchers.IO) {
             val localPath = FileKit.openDirectoryPicker(getString("file.saveTo"))?.path ?: return@withContext
             DeviceOperate.pull(
-                files = files.map { it.fullPath },
+                files = files.map { it.absolutePath },
                 localPath = localPath,
                 isWindows = hostOs.isWindows,
                 isMacOs = hostOs.isMacOS,
@@ -221,7 +224,7 @@ class FileViewModel : BaseViewModel<FileUiState>() {
 
     private suspend fun handleDeleteFiles(files: List<FileListingService.FileEntry>) {
         withContext(Dispatchers.IO) {
-            DeviceOperate.rm(files.map { it.fullPath })
+            DeviceOperate.rm(files.map { it.absolutePath })
         }
         refreshCurrentDirectory()
     }
@@ -240,6 +243,61 @@ class FileViewModel : BaseViewModel<FileUiState>() {
                 handleUploadFiles(it, uiState.value.parentPath)
             }
         }
+    }
+
+    private suspend fun handleCreateFolder(folderName: String) {
+        if (folderName.isBlank()) {
+            handleToast(getString("file.create.folder.nameEmpty"))
+            return
+        }
+        
+        val folderPath = calculatePath(uiState.value.parentPath, folderName)
+        withContext(Dispatchers.IO) {
+            try {
+                DeviceOperate.mkdir(folderPath, 755)
+                handleToast(getString("file.create.folder.success").format(folderName))
+            } catch (e: Exception) {
+                handleToast(getString("file.create.folder.error").format(e.message ?: "Unknown error"))
+            }
+        }
+        refreshCurrentDirectory()
+    }
+    
+    private suspend fun handleCreateFile(fileName: String) {
+        if (fileName.isBlank()) {
+            handleToast(getString("file.create.file.nameEmpty"))
+            return
+        }
+        
+        val filePath = calculatePath(uiState.value.parentPath, fileName)
+        withContext(Dispatchers.IO) {
+            try {
+                DeviceOperate.touch(filePath)
+                handleToast(getString("file.create.file.success").format(fileName))
+            } catch (e: Exception) {
+                handleToast(getString("file.create.file.error").format(e.message ?: "Unknown error"))
+            }
+        }
+        refreshCurrentDirectory()
+    }
+    
+    private suspend fun handleRenameFile(oldPath: String, newName: String) {
+        if (newName.isBlank()) {
+            handleToast(getString("file.rename.name.empty"))
+            return
+        }
+        
+        val parentPath = oldPath.substringBeforeLast("/")
+        val newPath = calculatePath(parentPath, newName)
+        withContext(Dispatchers.IO) {
+            try {
+                DeviceOperate.mv(oldPath, newPath)
+                handleToast(getString("file.rename.success"))
+            } catch (e: Exception) {
+                handleToast(getString("file.rename.failed").format(e.message ?: "Unknown error"))
+            }
+        }
+        refreshCurrentDirectory()
     }
 
     private fun handleToast(message: String) {

@@ -41,9 +41,21 @@ object DeviceOperate {
         shell("kill $pidStr")
     }
 
-    fun rm(filePath: List<String>) {
-        Log.i(TAG, "adb shell rm -rf $filePath")
-        device?.let { device -> filePath.forEach { device.removeRemotePackage(it) } }
+    fun rm(path: List<String>) {
+        val pathStr = path.joinToString(" ")
+        Log.i(TAG, "adb shell rm -rf $pathStr")
+        shell("rm -rf $pathStr")
+    }
+
+    /**
+     * mv 命令
+     * @param start 开始路径
+     * @param end 目标路径
+     */
+    fun mv(start: String, end: String) {
+        device?.let { device ->
+            shell("mv $start $end")
+        }
     }
 
     fun inputKey(key: Int) {
@@ -201,8 +213,13 @@ object DeviceOperate {
         fileListingService?.apply {
             getChildren(
                 FileListingService.FileEntry(
-                    root, parentPath, FileListingService.TYPE_DIRECTORY, device?.isRoot == true
-                ), false, object : FileListingService.IListingReceiver {
+                    root,
+                    parentPath,
+                    FileListingService.TYPE_DIRECTORY,
+                    false
+                ),
+                false,
+                object : FileListingService.IListingReceiver {
                     override fun setChildren(
                         entry: FileListingService.FileEntry?, children: Array<out FileListingService.FileEntry>?
                     ) {

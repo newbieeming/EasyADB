@@ -25,7 +25,7 @@ import com.xmbest.model.DialogType
 fun GlobalDialog() {
     val dialogState = LocalDialogState.current
     val state = dialogState.value
-    
+
     if (state.isVisible) {
         Dialog(
             onDismissRequest = {
@@ -65,7 +65,7 @@ fun GlobalDialog() {
                                 DialogType.SUCCESS -> Icons.Default.CheckCircle
                                 DialogType.CUSTOM -> null
                             }
-                            
+
                             val iconColor = when (state.type) {
                                 DialogType.INFO -> MaterialTheme.colors.primary
                                 DialogType.WARNING -> Color(0xFFFF9800)
@@ -73,7 +73,7 @@ fun GlobalDialog() {
                                 DialogType.SUCCESS -> Color(0xFF4CAF50)
                                 DialogType.CUSTOM -> MaterialTheme.colors.primary
                             }
-                            
+
                             iconToShow?.let { icon ->
                                 Icon(
                                     imageVector = icon,
@@ -83,7 +83,7 @@ fun GlobalDialog() {
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                             }
-                            
+
                             // 标题
                             if (state.title.isNotEmpty()) {
                                 Text(
@@ -96,10 +96,10 @@ fun GlobalDialog() {
                                 )
                             }
                         }
-                        
+
                         Spacer(modifier = Modifier.height(16.dp))
                     }
-                    
+
                     // 内容区域
                     Box(
                         modifier = Modifier.fillMaxWidth(),
@@ -118,9 +118,9 @@ fun GlobalDialog() {
                             )
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
-                    
+
                     // 按钮区域
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -129,39 +129,40 @@ fun GlobalDialog() {
                     ) {
                         // 取消按钮
                         if (state.onCancel != null) {
-                            TextButton(
+                            Button(
                                 onClick = {
                                     state.onCancel.invoke()
                                     dialogState.value = DialogState()
                                 },
                                 colors = ButtonDefaults.textButtonColors(
-                                    contentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                                    backgroundColor = MaterialTheme.colors.error
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                elevation = ButtonDefaults.elevation(
+                                    defaultElevation = 2.dp,
+                                    pressedElevation = 4.dp
                                 )
                             ) {
                                 Text(
                                     text = state.cancelText,
                                     style = MaterialTheme.typography.button.copy(
                                         fontWeight = FontWeight.Medium
-                                    )
+                                    ),
+                                    color = Color.White
                                 )
                             }
-                            
+
                             Spacer(modifier = Modifier.width(8.dp))
                         }
-                        
+
                         // 确认按钮
                         Button(
                             onClick = {
                                 state.onConfirm?.invoke()
                                 dialogState.value = DialogState()
                             },
-                            colors = ButtonDefaults.buttonColors(
-                                backgroundColor = when (state.type) {
-                                    DialogType.ERROR -> MaterialTheme.colors.error
-                                    DialogType.WARNING -> Color(0xFFFF9800)
-                                    DialogType.SUCCESS -> Color(0xFF4CAF50)
-                                    else -> MaterialTheme.colors.primary
-                                }
+                            colors = ButtonDefaults.textButtonColors(
+                                backgroundColor = MaterialTheme.colors.primary
                             ),
                             shape = RoundedCornerShape(8.dp),
                             elevation = ButtonDefaults.elevation(
