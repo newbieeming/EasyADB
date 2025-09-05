@@ -61,6 +61,7 @@ class FileViewModel : BaseViewModel<FileUiState>() {
                 is FileUiEvent.UploadFiles -> handleUploadFiles(event.files, uiState.value.parentPath)
                 is FileUiEvent.DownloadFiles -> handleDownloadFiles(event.files)
                 is FileUiEvent.DeleteFiles -> handleDeleteFiles(event.files)
+                is FileUiEvent.DeleteAllFiles -> handleDeleteAllFiles()
                 is FileUiEvent.CreateFolder -> handleCreateFolder(event.folderName)
                 is FileUiEvent.CreateFile -> handleCreateFile(event.fileName)
                 is FileUiEvent.RenameFile -> handleRenameFile(event.oldPath, event.newName)
@@ -219,6 +220,16 @@ class FileViewModel : BaseViewModel<FileUiState>() {
             DeviceOperate.rm(files.map { it.absolutePath })
         }
         refreshCurrentDirectory()
+    }
+
+    private suspend fun handleDeleteAllFiles() {
+        val currentFiles = uiState.value.children
+        if (currentFiles.isNotEmpty()) {
+            withContext(Dispatchers.IO) {
+                DeviceOperate.rm(currentFiles.map { it.absolutePath })
+            }
+            refreshCurrentDirectory()
+        }
     }
 
     private suspend fun handleImported() {

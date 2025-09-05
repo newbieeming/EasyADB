@@ -18,6 +18,7 @@ import com.xmbest.FILE_SPLIT
 import com.xmbest.LocalDialogState
 import com.xmbest.ddmlib.ClipboardUtil
 import com.xmbest.theme.ButtonShape
+import com.xmbest.util.DialogUtil
 import com.xmbest.util.InputDialogUtil
 
 /**
@@ -63,6 +64,7 @@ fun FileHeader(viewModel: FileViewModel) {
 
     var showCreateFolderDialog by remember { mutableStateOf(false) }
     var showCreateFileDialog by remember { mutableStateOf(false) }
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -79,16 +81,19 @@ fun FileHeader(viewModel: FileViewModel) {
 
         FunctionButtonsRow(
             showBackButton = uiState.parentPath != FILE_SPLIT,
+            showDelectFilesButton = uiState.children.isNotEmpty(),
             onBackClick = { viewModel.onEvent(FileUiEvent.NavigateToPath(getParentPath(uiState.parentPath))) },
             onRefreshClick = { viewModel.onEvent(FileUiEvent.Refresh) },
             onNewFolderClick = { showCreateFolderDialog = true },
             onNewFileClick = { showCreateFileDialog = true },
             onImportClick = { viewModel.onEvent(FileUiEvent.Imported) },
+            onDeleteAllClick = { showDeleteAllDialog = true },
             backLabel = viewModel.getString("file.back"),
             refreshLabel = viewModel.getString("file.refresh"),
             newFolderLabel = viewModel.getString("file.newFolder"),
             newFileLabel = viewModel.getString("file.newFile"),
-            importLabel = viewModel.getString("file.importFile")
+            importLabel = viewModel.getString("file.importFile"),
+            deleteAllLabel = viewModel.getString("file.deleteAll")
         )
     }
 
@@ -119,6 +124,20 @@ fun FileHeader(viewModel: FileViewModel) {
             onCancel = {
                 showCreateFileDialog = false
             }
+        )
+    }
+
+    // 删除所有文件确认对话框
+    if (showDeleteAllDialog) {
+        DialogUtil.showWarning(
+            dialogState = dialogState,
+            title = viewModel.getString("file.deleteAll"),
+            message = viewModel.getString("file.deleteAll.confirm"),
+            onConfirm = {
+                viewModel.onEvent(FileUiEvent.DeleteAllFiles)
+                showDeleteAllDialog = false
+            },
+            onCancel = { showDeleteAllDialog = false }
         )
     }
 }
@@ -210,16 +229,19 @@ private fun PathBreadcrumb(
 @Composable
 private fun FunctionButtonsRow(
     showBackButton: Boolean,
+    showDelectFilesButton: Boolean,
     onBackClick: () -> Unit,
     onRefreshClick: () -> Unit,
     onNewFolderClick: () -> Unit,
     onNewFileClick: () -> Unit,
     onImportClick: () -> Unit,
+    onDeleteAllClick: () -> Unit,
     backLabel: String,
     refreshLabel: String,
     newFolderLabel: String,
     newFileLabel: String,
-    importLabel: String
+    importLabel: String,
+    deleteAllLabel: String
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -255,10 +277,17 @@ private fun FunctionButtonsRow(
         )
 
         FunctionButton(
-            icon = Icons.Default.Upload,
+            icon = Icons.Default.FileUpload,
             text = importLabel,
             onClick = onImportClick
         )
+        if (showDelectFilesButton) {
+            FunctionButton(
+                icon = Icons.Default.DeleteSweep,
+                text = deleteAllLabel,
+                onClick = onDeleteAllClick
+            )
+        }
     }
 }
 
