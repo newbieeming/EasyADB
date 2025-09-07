@@ -1,18 +1,23 @@
 package me.xmbest.screen.file
 
-import androidx.compose.foundation.*
+import androidx.compose.animation.*
+import androidx.compose.animation.core.EaseInCubic
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -27,6 +32,7 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import me.xmbest.FILE_SPLIT
 import me.xmbest.LocalSnackbarHostState
 import me.xmbest.ddmlib.ClipboardUtil
@@ -48,13 +54,37 @@ fun FileScreen(viewModel: FileViewModel = viewModel()) {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun FileScreenContent(viewModel: FileViewModel) {
-    val scrollState = rememberScrollState()
+    val lazyListState = rememberLazyListState()
     val uiState = viewModel.uiState.collectAsState().value
 
     val requester = FocusRequester()
 
+    val coroutineScope = rememberCoroutineScope()
+
     SideEffect {
         requester.requestFocus()
+    }
+
+    // 监听parentPath变化，自动滚动到顶部
+    LaunchedEffect(uiState.parentPath) {
+        lazyListState.scrollToItem(0)
+    }
+
+    // 监听滚动状态，判断是否显示回到顶部按钮
+    val showScrollToTopButton by remember {
+        derivedStateOf {
+            lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0
+        }
+    }
+
+    // 监听滚动状态，判断是否滑动到底部
+    val isAtBottom by remember {
+        derivedStateOf {
+            val layoutInfo = lazyListState.layoutInfo
+            val totalItemsCount = layoutInfo.totalItemsCount
+            val lastVisibleItemIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            totalItemsCount > 0 && lastVisibleItemIndex >= totalItemsCount - 1
+        }
     }
 
     FileScreenSideEffects(viewModel, uiState)
@@ -69,10 +99,47 @@ private fun FileScreenContent(viewModel: FileViewModel) {
             .focusRequester(requester).focusable()
     ) {
         FileList(
-            viewModel = viewModel, uiState = uiState, scrollState = scrollState
+            viewModel = viewModel, uiState = uiState, lazyListState = lazyListState
         )
 
         DragOverlay(uiState)
+
+        // 回到顶部浮动按钮
+        AnimatedVisibility(
+            visible = showScrollToTopButton,
+            enter = slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = tween(300, easing = EaseOutCubic)
+            ) + fadeIn(animationSpec = tween(300)),
+            exit = slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = tween(300, easing = EaseInCubic)
+            ) + fadeOut(animationSpec = tween(300)),
+            modifier = Modifier.align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = if (isAtBottom) 56.dp else 16.dp)
+        ) {
+            FloatingActionButton(
+                onClick = {
+                    // 平滑滚动到顶部
+                    coroutineScope.launch {
+                        lazyListState.animateScrollToItem(0)
+                    }
+                },
+                backgroundColor = MaterialTheme.colors.background,
+                contentColor = MaterialTheme.colors.onBackground,
+                modifier = Modifier.size(56.dp),
+                elevation = FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 0.dp,  // 默认状态无阴影
+                    pressedElevation = 2.dp   // 按压时轻微阴影
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = "back to top",
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
 
         // 底部过滤UI
         FilterBottomBar(
@@ -242,10 +309,11 @@ private fun shouldStartDragAndDrop(event: DragAndDropEvent): Boolean {
 
 @Composable
 private fun FileList(
-    viewModel: FileViewModel, uiState: FileUiState, scrollState: ScrollState
+    viewModel: FileViewModel, uiState: FileUiState, lazyListState: LazyListState
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(bottom = 6.dp).scrollable(scrollState, Orientation.Vertical)
+        state = lazyListState,
+        modifier = Modifier.fillMaxSize().padding(bottom = 6.dp)
     ) {
         stickyHeader {
             FileHeader(viewModel)
