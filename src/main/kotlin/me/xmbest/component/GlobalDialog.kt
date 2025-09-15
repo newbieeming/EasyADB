@@ -2,6 +2,7 @@ package me.xmbest.component
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -108,14 +109,16 @@ fun GlobalDialog() {
                         if (state.customContent != null) {
                             state.customContent.invoke()
                         } else {
-                            Text(
-                                text = state.message,
-                                style = MaterialTheme.typography.body1.copy(
-                                    fontSize = 14.sp,
-                                    lineHeight = 20.sp
-                                ),
-                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.87f)
-                            )
+                            SelectionContainer{
+                                Text(
+                                    text = state.message,
+                                    style = MaterialTheme.typography.body1.copy(
+                                        fontSize = 14.sp,
+                                        lineHeight = 20.sp
+                                    ),
+                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.87f)
+                                )
+                            }
                         }
                     }
 

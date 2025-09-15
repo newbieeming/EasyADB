@@ -1,6 +1,7 @@
 package me.xmbest.screen.home
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.VolumeDown
 import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material.icons.filled.ClearAll
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import me.xmbest.base.BaseViewModel
 import me.xmbest.ddmlib.*
+import me.xmbest.ddmlib.DeviceOperate.findCurrentActivity
 
 class HomeViewModel() : BaseViewModel<HomeUiState>() {
 
@@ -24,7 +26,7 @@ class HomeViewModel() : BaseViewModel<HomeUiState>() {
             keyEventList = listOf(
                 Triple("任务列表", Icons.Default.ClearAll, 187),
                 Triple("返回桌面", Icons.Outlined.Home, 3),
-                Triple("返回上级", Icons.Outlined.ArrowBack, 4),
+                Triple("返回上级", Icons.AutoMirrored.Outlined.ArrowBack, 4),
                 Triple("锁定屏幕", Icons.Outlined.Lock, 26),
                 Triple("增加音量", Icons.AutoMirrored.Outlined.VolumeUp, 24),
                 Triple("减少音量", Icons.AutoMirrored.Outlined.VolumeDown, 25),
@@ -64,9 +66,27 @@ class HomeViewModel() : BaseViewModel<HomeUiState>() {
                 is HomeUiEvent.Reboot -> DeviceOperate.reboot()
                 is HomeUiEvent.OpenSettings -> DeviceOperate.openSettings()
                 is HomeUiEvent.OpenWifiAdb -> DeviceOperate.tcpip()
-                is HomeUiEvent.ScreenShot -> DeviceOperate.screenshot()
-                is HomeUiEvent.FindCurrentActivity -> DeviceOperate.findCurrentActivity()
+                is HomeUiEvent.ScreenShot -> handleScreenShot()
+                is HomeUiEvent.FindCurrentActivity -> handleFindCurrentActivity()
+                is HomeUiEvent.ClearCurrentActivity -> handleClearCurrentActivity()
             }
+        }
+    }
+
+    private fun handleClearCurrentActivity(){
+        _uiState.value = _uiState.value.copy(currentActivity = null)
+    }
+
+
+    private suspend fun handleFindCurrentActivity() {
+        val activity = findCurrentActivity()
+        ClipboardUtil.setSysClipboardText(activity)
+        _uiState.value = _uiState.value.copy(currentActivity = activity)
+    }
+
+    private fun handleScreenShot() {
+        DeviceOperate.screenshot()?.let {
+            ClipboardUtil.setClipboardImage(it)
         }
     }
 }

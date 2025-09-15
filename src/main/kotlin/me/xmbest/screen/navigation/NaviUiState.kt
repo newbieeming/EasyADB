@@ -12,5 +12,5 @@ data class NaviUiState(
      */
     val devicesListShow: Boolean = false,
     val device: IDevice? = null,
-    val devices: List<IDevice> = emptyList()
+    val devices: Set<IDevice> = emptySet()
 )

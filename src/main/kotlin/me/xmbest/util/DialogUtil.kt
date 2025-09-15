@@ -104,7 +104,7 @@ object DialogUtil {
     
     fun showConfirm(
         dialogState: MutableState<DialogState>,
-        title: String = "",
+        title: String = strings.get("dialog.title.success"),
         message: String,
         confirmText: String = strings.get("button.confirm"),
         cancelText: String = strings.get("button.cancel"),

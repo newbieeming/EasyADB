@@ -10,4 +10,5 @@ sealed class HomeUiEvent {
     object OpenWifiAdb : HomeUiEvent()
     object ScreenShot : HomeUiEvent()
     object FindCurrentActivity : HomeUiEvent()
+    object ClearCurrentActivity : HomeUiEvent()
 }

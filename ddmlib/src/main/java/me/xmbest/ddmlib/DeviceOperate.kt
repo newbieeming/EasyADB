@@ -142,11 +142,7 @@ object DeviceOperate {
      * @param file 这里非windows需要传，即软件执行文件
      */
     fun push(
-        files: List<String>,
-        remotePath: String,
-        isWindows: Boolean = true,
-        isMacOs: Boolean = false,
-        file: File
+        files: List<String>, remotePath: String, isWindows: Boolean = true, isMacOs: Boolean = false, file: File
     ) {
         executeFileTransfer("push", files, remotePath, isWindows, isMacOs, file)
     }
@@ -160,11 +156,7 @@ object DeviceOperate {
      * @param file 这里非windows需要传，即软件执行文件
      */
     fun pull(
-        files: List<String>,
-        localPath: String,
-        isWindows: Boolean = true,
-        isMacOs: Boolean = false,
-        file: File
+        files: List<String>, localPath: String, isWindows: Boolean = true, isMacOs: Boolean = false, file: File
     ) {
         executeFileTransfer("pull", files, localPath, isWindows, isMacOs, file)
     }
@@ -196,23 +188,17 @@ object DeviceOperate {
 
     /**
      * 截图
-     * @param needWriteClipboard 是否写入剪切板
      */
-    fun screenshot(needWriteClipboard: Boolean = true): Image? {
-        val image = device?.screenshot?.asBufferedImage() ?: return null
-        if (needWriteClipboard) {
-            ClipboardUtil.setClipboardImage(image)
-        }
-        return image
+    fun screenshot(): Image? {
+        val serialNumber = device?.serialNumber
+        Log.i(TAG, "adb shell screenshot $serialNumber")
+        return device?.screenshot?.asBufferedImage()
     }
 
     suspend fun findCurrentActivity(): String {
         val shell = shell("dumpsys window | grep mCurrentFocus", 200)
         val regex = Regex(pattern = """\s\S+/\S+}""")
-        val res = regex.find(shell)?.value?.replace("}", "")?.trim() ?: ""
-        //复制到剪切板
-        ClipboardUtil.setSysClipboardText(res)
-        return res
+        return regex.find(shell)?.value?.replace("}", "")?.trim() ?: ""
     }
 
     /**
@@ -222,13 +208,8 @@ object DeviceOperate {
         fileListingService?.apply {
             getChildren(
                 FileListingService.FileEntry(
-                    root,
-                    parentPath,
-                    FileListingService.TYPE_DIRECTORY,
-                    false
-                ),
-                false,
-                object : FileListingService.IListingReceiver {
+                    root, parentPath, FileListingService.TYPE_DIRECTORY, false
+                ), false, object : FileListingService.IListingReceiver {
                     override fun setChildren(
                         entry: FileListingService.FileEntry?, children: Array<out FileListingService.FileEntry>?
                     ) {

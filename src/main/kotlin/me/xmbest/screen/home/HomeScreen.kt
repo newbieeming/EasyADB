@@ -28,9 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.ddmlib.IDevice
+import me.xmbest.LocalDialogState
 import me.xmbest.component.Item
 import me.xmbest.ddmlib.*
 import me.xmbest.theme.CardShape
+import me.xmbest.util.DialogUtil
 
 
 @Composable
@@ -40,6 +42,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
         val uiState = viewModel.uiState.collectAsState().value
         FirstRow(viewModel, uiState)
         Row(modifier = Modifier.fillMaxWidth()) {
+            val dialogState = LocalDialogState.current
             Column(
                 modifier = Modifier.fillMaxWidth().padding(10.dp).clip(CardShape)
                     .background(MaterialTheme.colors.surface).padding(10.dp)
@@ -56,6 +59,16 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
 
+                    // 显示查询出的activity值弹窗
+                    uiState.currentActivity?.let { activity ->
+                        DialogUtil.showConfirm(
+                            dialogState = dialogState,
+                            title = "已复制到剪切板",
+                            message = activity
+                        )
+                        viewModel.onEvent(HomeUiEvent.ClearCurrentActivity)
+                    }
+
                     Item(
                         icon = Icons.Default.Search,
                         "当前Activity"
@@ -67,7 +80,14 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                         Icons.Default.Replay,
                         "重启",
                     ) {
-                        viewModel.onEvent(HomeUiEvent.Reboot)
+                        DialogUtil.showWarning(
+                            dialogState,
+                            message = "是否重启设备",
+                            onCancel = {},
+                            onConfirm = {
+                                viewModel.onEvent(HomeUiEvent.Reboot)
+                            }
+                        )
                     }
 
                     Item(

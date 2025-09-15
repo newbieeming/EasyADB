@@ -9,5 +9,6 @@ data class HomeUiState(
     val ipAddress: String? = null,
     val memory: String? = null,
     val cpuCoreSize: String? = null,
+    val currentActivity: String? = null,
     val keyEventList: List<Triple<String, ImageVector, Int>> = emptyList()
 )

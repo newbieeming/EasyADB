@@ -22,7 +22,7 @@ object DeviceManager {
         CoroutineScope(Dispatchers.IO + SupervisorJob() + CoroutineName(TAG))
 
     private var refreshDevicesJob: Job? = null
-    private val _devices = MutableStateFlow<List<IDevice>>(emptyList())
+    private val _devices = MutableStateFlow<Set<IDevice>>(emptySet())
 
     private val _device = MutableStateFlow<IDevice?>(null)
     val device = _device.asStateFlow()
@@ -92,9 +92,9 @@ object DeviceManager {
             val bridge = AndroidDebugBridge.getBridge()
             Log.d(TAG, "isConnected = ${bridge?.isConnected},size = ${bridge?.devices?.size}")
             if (bridge?.isConnected == true) {
-                _devices.update { bridge.devices.filter { it.state == IDevice.DeviceState.ONLINE }.toList() }
+                _devices.update { bridge.devices.filter { it.state == IDevice.DeviceState.ONLINE }.toSet() }
             } else {
-                _devices.update { emptyList() }
+                _devices.update { emptySet() }
             }
         }
     }
