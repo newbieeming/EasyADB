@@ -190,8 +190,6 @@ object DeviceOperate {
      * 截图
      */
     fun screenshot(): Image? {
-        val serialNumber = device?.serialNumber
-        Log.i(TAG, "adb shell screenshot $serialNumber")
         return device?.screenshot?.asBufferedImage()
     }
 

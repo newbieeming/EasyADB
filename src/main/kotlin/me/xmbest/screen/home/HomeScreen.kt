@@ -13,10 +13,10 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.BugReport
-import androidx.compose.material.icons.outlined.DeleteSweep
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -63,74 +63,31 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                     uiState.currentActivity?.let { activity ->
                         DialogUtil.showConfirm(
                             dialogState = dialogState,
-                            title = "已复制到剪切板",
+                            title = viewModel.getString("home.currentActivity.copied"),
                             message = activity
                         )
                         viewModel.onEvent(HomeUiEvent.ClearCurrentActivity)
                     }
 
-                    Item(
-                        icon = Icons.Default.Search,
-                        "当前Activity"
-                    ) {
-                        viewModel.onEvent(HomeUiEvent.FindCurrentActivity)
-                    }
-
-                    Item(
-                        Icons.Default.Replay,
-                        "重启",
-                    ) {
-                        DialogUtil.showWarning(
-                            dialogState,
-                            message = "是否重启设备",
-                            onCancel = {},
-                            onConfirm = {
-                                viewModel.onEvent(HomeUiEvent.Reboot)
+                    // 渲染统一的功能项列表
+                    uiState.actionList.forEach { actionItem ->
+                        Item(
+                            icon = actionItem.icon,
+                            viewModel.getString(actionItem.titleKey)
+                        ) {
+                            if (actionItem.needsConfirmation && actionItem.confirmationMessageKey != null) {
+                                DialogUtil.showWarning(
+                                    dialogState,
+                                    message = viewModel.getString(actionItem.confirmationMessageKey),
+                                    onCancel = {},
+                                    onConfirm = {
+                                        viewModel.onEvent(HomeUiEvent.ExecuteAction(actionItem.action))
+                                    }
+                                )
+                            } else {
+                                viewModel.onEvent(HomeUiEvent.ExecuteAction(actionItem.action))
                             }
-                        )
-                    }
-
-                    Item(
-                        Icons.Default.FilterCenterFocus,
-                        "屏幕截图",
-                    ) {
-                        viewModel.onEvent(HomeUiEvent.ScreenShot)
-                    }
-
-
-                    Item(
-                        icon = Icons.Outlined.BugReport,
-                        "无线ADB"
-                    ) {
-                        viewModel.onEvent(HomeUiEvent.OpenWifiAdb)
-                    }
-
-                    Item(
-                        Icons.Outlined.Settings,
-                        "原生设置",
-                    ) {
-                        viewModel.onEvent(HomeUiEvent.OpenSettings)
-                    }
-
-                    Item(
-                        Icons.Outlined.DeleteSweep,
-                        "清理logcat",
-                    ) {
-                        viewModel.onEvent(HomeUiEvent.ClearLogcat)
-                    }
-
-                    Item(
-                        Icons.Default.KeyboardDoubleArrowDown,
-                        "显示状态栏",
-                    ) {
-                        viewModel.onEvent(HomeUiEvent.ShowStatusbar)
-                    }
-
-                    Item(
-                        Icons.Default.KeyboardDoubleArrowUp,
-                        "隐藏状态栏",
-                    ) {
-                        viewModel.onEvent(HomeUiEvent.HideStatusbar)
+                        }
                     }
 
                     uiState.keyEventList.forEach {

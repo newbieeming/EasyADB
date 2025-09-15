@@ -10,5 +10,14 @@ data class HomeUiState(
     val memory: String? = null,
     val cpuCoreSize: String? = null,
     val currentActivity: String? = null,
-    val keyEventList: List<Triple<String, ImageVector, Int>> = emptyList()
+    val keyEventList: List<Triple<String, ImageVector, Int>> = emptyList(),
+    val actionList: List<HomeActionItem> = emptyList()
+)
+
+data class HomeActionItem(
+    val titleKey: String,
+    val icon: ImageVector,
+    val action: HomeAction,
+    val needsConfirmation: Boolean = false,
+    val confirmationMessageKey: String? = null
 )
