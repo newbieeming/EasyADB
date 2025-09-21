@@ -1,6 +1,7 @@
 package me.xmbest.screen.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Hive
 import androidx.compose.material.icons.filled.Settings
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 import me.xmbest.base.BaseViewModel
 import me.xmbest.ddmlib.DeviceManager
 import me.xmbest.model.Page
+import me.xmbest.screen.app.AppScreen
 import me.xmbest.screen.file.FileScreen
 import me.xmbest.screen.home.HomeScreen
 import me.xmbest.screen.settings.SettingsScreen
@@ -24,6 +26,12 @@ class NaviViewModule() : BaseViewModel<NaviUiState>() {
             Icons.Default.Hive
         ) {
             HomeScreen()
+        },
+        Page(
+            "应用管理",
+            Icons.Default.Android
+        ) {
+            AppScreen()
         },
         Page(
             getString("router.item.fileManagement"),

@@ -41,65 +41,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
     Column(modifier = Modifier.fillMaxWidth().verticalScroll(scrollState)) {
         val uiState = viewModel.uiState.collectAsState().value
         FirstRow(viewModel, uiState)
-        Row(modifier = Modifier.fillMaxWidth()) {
-            val dialogState = LocalDialogState.current
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(10.dp).clip(CardShape)
-                    .background(MaterialTheme.colors.surface).padding(10.dp)
-            ) {
-                Text(
-                    text = viewModel.getString("router.item.commonFeatures"),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colors.primary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-
-                    // 显示查询出的activity值弹窗
-                    uiState.currentActivity?.let { activity ->
-                        DialogUtil.showConfirm(
-                            dialogState = dialogState,
-                            title = viewModel.getString("home.currentActivity.copied"),
-                            message = activity
-                        )
-                        viewModel.onEvent(HomeUiEvent.ClearCurrentActivity)
-                    }
-
-                    // 渲染统一的功能项列表
-                    uiState.actionList.forEach { actionItem ->
-                        Item(
-                            icon = actionItem.icon,
-                            viewModel.getString(actionItem.titleKey)
-                        ) {
-                            if (actionItem.needsConfirmation && actionItem.confirmationMessageKey != null) {
-                                DialogUtil.showWarning(
-                                    dialogState,
-                                    message = viewModel.getString(actionItem.confirmationMessageKey),
-                                    onCancel = {},
-                                    onConfirm = {
-                                        viewModel.onEvent(HomeUiEvent.ExecuteAction(actionItem.action))
-                                    }
-                                )
-                            } else {
-                                viewModel.onEvent(HomeUiEvent.ExecuteAction(actionItem.action))
-                            }
-                        }
-                    }
-
-                    uiState.keyEventList.forEach {
-                        Item(
-                            icon = it.second, it.first, click = {
-                                viewModel.onEvent(HomeUiEvent.InputKey(it.third))
-                            }
-                        )
-                    }
-                }
-            }
-        }
+        SecondRow(viewModel, uiState)
     }
 }
 
@@ -357,5 +299,69 @@ fun FirstRow(viewModel: HomeViewModel, uiState: HomeUiState) {
                 .background(MaterialTheme.colors.surface).padding(10.dp)
                 .align(Alignment.CenterVertically)
         )
+    }
+}
+
+@Composable
+fun SecondRow(viewModel: HomeViewModel, uiState: HomeUiState) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        val dialogState = LocalDialogState.current
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(10.dp).clip(CardShape)
+                .background(MaterialTheme.colors.surface).padding(10.dp)
+        ) {
+            Text(
+                text = viewModel.getString("router.item.commonFeatures"),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colors.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+
+                // 显示查询出的activity值弹窗
+                uiState.currentActivity?.let { activity ->
+                    DialogUtil.showConfirm(
+                        dialogState = dialogState,
+                        title = viewModel.getString("home.currentActivity.copied"),
+                        message = activity
+                    )
+                    viewModel.onEvent(HomeUiEvent.ClearCurrentActivity)
+                }
+
+                // 渲染统一的功能项列表
+                uiState.actionList.forEach { actionItem ->
+                    Item(
+                        icon = actionItem.icon,
+                        viewModel.getString(actionItem.titleKey),
+                        uiState.device != null
+                    ) {
+                        if (actionItem.needsConfirmation && actionItem.confirmationMessageKey != null) {
+                            DialogUtil.showWarning(
+                                dialogState,
+                                message = viewModel.getString(actionItem.confirmationMessageKey),
+                                onCancel = {},
+                                onConfirm = {
+                                    viewModel.onEvent(HomeUiEvent.ExecuteAction(actionItem.action))
+                                }
+                            )
+                        } else {
+                            viewModel.onEvent(HomeUiEvent.ExecuteAction(actionItem.action))
+                        }
+                    }
+                }
+
+                uiState.keyEventList.forEach {
+                    Item(
+                        icon = it.second, it.first, isClick = uiState.device != null, click = {
+                            viewModel.onEvent(HomeUiEvent.InputKey(it.third))
+                        }
+                    )
+                }
+            }
+        }
     }
 }

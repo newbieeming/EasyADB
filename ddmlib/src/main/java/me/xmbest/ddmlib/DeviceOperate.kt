@@ -22,6 +22,11 @@ object DeviceOperate {
 
     private const val CMD_CLOSE_TIMEOUT = 3
 
+    /**
+     * top命令查询的字段
+     */
+    val topColumns = listOf("pid", "user", "%cpu", "time+", "%mem", "virt", "res", "shr", "name")
+
     fun root(): Boolean {
         Log.i(TAG, "adb root")
         return device?.root() ?: false
@@ -35,7 +40,7 @@ object DeviceOperate {
     /**
      * 需要设备root后，未root的机器推荐forceStop
      */
-    fun kill(pids: List<Int>) {
+    fun kill(pids: List<String>) {
         val pidStr = pids.joinToString(" ")
         Log.i(TAG, "adb shell kill $pidStr")
         shell("kill $pidStr")
@@ -240,6 +245,83 @@ object DeviceOperate {
      * 清理logcat缓存
      */
     fun logcatC() = shell("logcat -c")
+
+    /**
+     * 获取当前进程信息
+     */
+    suspend fun getProcessList(filter: String): List<ProcessInfo> {
+        // 第一次尝试：使用 `top -b -n 1 -o <column>` 格式
+        val postfix = if (filter.isEmpty()) "" else " | grep $filter"
+        val command = topColumns.joinToString(" -o ", "top -b -n 1 -o ", postfix)
+        Log.d(TAG, "command = $command")
+        val result = shell(command, 1000)
+        var processes = parseTopOutput(result, topColumns)
+
+        // 如果第一次解析失败（可能是旧版 top），尝试通用 `top -n 1` 格式
+        if (processes.isEmpty()) {
+            val fallbackResult = shell("top -n 1", 500)
+            val fallbackColumns = fallbackResult.split("\n")
+                .firstOrNull { it.trim().startsWith("PID") }
+                ?.trim()
+                ?.split("\\s+".toRegex())
+                ?.map { column ->
+                    when (column.lowercase()) {
+                        "cpu%" -> "%cpu"
+                        "uid" -> "user"
+                        "rss" -> "res"
+                        else -> column.lowercase()
+                    }
+                } ?: topColumns // 如果仍然无法解析，使用默认列名
+            processes = parseTopOutput(fallbackResult, fallbackColumns)
+        }
+        return processes
+    }
+
+    fun parseTopOutput(output: String, columns: List<String>): List<ProcessInfo> {
+        val lines = output.split("\n")
+        var startIndex = 0
+
+        // 查找表头行（以 "PID" 开头）
+        for (i in lines.indices) {
+            if (lines[i].trim().startsWith("PID") || lines[i].trim().endsWith("%host")) {
+                startIndex = i + 1
+                break
+            }
+        }
+
+        if (startIndex < lines.size && lines[startIndex].trim().startsWith("PID")) {
+            startIndex += 1
+        }
+
+        return lines.drop(startIndex)
+            .filter { it.trim().isNotEmpty() }
+            .map { line ->
+                val parts = line.trim().split("\\s+".toRegex())
+                val process = mutableMapOf<String, String>()
+
+                columns.forEachIndexed { index, column ->
+                    process[column] = if (column == "args") {
+                        parts.drop(index).joinToString(" ")
+                    } else {
+                        parts.getOrNull(index) ?: ""
+                    }
+                }
+
+                ProcessInfo(
+                    pid = process["pid"] ?: "",
+                    user = process["user"] ?: "",
+                    cpu = process["%cpu"] ?: "",
+                    time = process["time+"] ?: "",
+                    mem = process["%mem"] ?: "",
+                    virt = process["virt"] ?: "",
+                    res = process["res"] ?: "",
+                    shr = process["shr"] ?: "",
+                    name = process["name"] ?: "",
+                    args = process["args"] ?: "",
+                )
+            }
+            .filter { it.args != "top -b -n 1" } // 过滤掉 top 命令自身的进程
+    }
 
     fun shell(command: String) = device?.executeShellCommand(command, EmptyReceiver())
 

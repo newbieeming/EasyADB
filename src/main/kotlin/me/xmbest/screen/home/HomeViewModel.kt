@@ -107,7 +107,6 @@ class HomeViewModel() : BaseViewModel<HomeUiState>() {
                 is HomeUiEvent.ExecuteAction -> handleAction(event.action)
                 is HomeUiEvent.ShowStatusbar -> DeviceOperate.controlStatusbar(true)
                 is HomeUiEvent.HideStatusbar -> DeviceOperate.controlStatusbar(false)
-                is HomeUiEvent.ClearLogcat -> DeviceOperate.logcatC()
                 is HomeUiEvent.Reboot -> DeviceOperate.reboot()
                 is HomeUiEvent.OpenSettings -> DeviceOperate.openSettings()
                 is HomeUiEvent.OpenWifiAdb -> DeviceOperate.tcpip()

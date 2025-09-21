@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 fun Item(
     icon: ImageVector,
     label: String,
+    isClick: Boolean = true,
     click: () -> Unit
 ) {
     Column(
@@ -28,7 +29,11 @@ fun Item(
             .padding(horizontal = 20.dp, vertical = 10.dp)
             .height(70.dp)
             .width(180.dp)
-            .clickable { click() },
+            .clickable {
+                if (isClick) {
+                    click()
+                }
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

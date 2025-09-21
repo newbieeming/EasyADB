@@ -5,7 +5,6 @@ sealed class HomeUiEvent {
     class ExecuteAction(val action: HomeAction) : HomeUiEvent()
     object ShowStatusbar : HomeUiEvent()
     object HideStatusbar : HomeUiEvent()
-    object ClearLogcat : HomeUiEvent()
     object Reboot : HomeUiEvent()
     object OpenSettings : HomeUiEvent()
     object OpenWifiAdb : HomeUiEvent()
