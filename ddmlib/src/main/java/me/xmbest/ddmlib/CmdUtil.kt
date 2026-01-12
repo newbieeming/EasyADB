@@ -20,4 +20,18 @@ object CmdUtil {
         builder.directory(File(System.getProperty("user.dir")))
         return builder.start()
     }
+
+    fun runShell(command: String): Process {
+        require(command.isNotBlank()) { "Command must not be blank." }
+        Log.d(TAG, "runShell $command")
+        val osName = System.getProperty("os.name").lowercase()
+        val commands = if (osName.contains("win")) {
+            listOf("cmd.exe", "/c", command)
+        } else {
+            listOf("/bin/sh", "-c", command)
+        }
+        val builder = ProcessBuilder(commands)
+        builder.directory(File(System.getProperty("user.dir")))
+        return builder.start()
+    }
 }

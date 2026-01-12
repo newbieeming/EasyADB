@@ -3,7 +3,13 @@ package me.xmbest.ddmlib
 import com.android.ddmlib.FileListingService
 import com.android.ddmlib.InstallReceiver
 import com.android.ddmlib.MultiLineReceiver
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.awt.Image
 import java.io.File
 import kotlin.coroutines.resume
@@ -98,7 +104,7 @@ object DeviceOperate {
      * 查找应用启动activity
      * @param packageName 包名
      */
-    suspend fun getLaunchActivity(packageName: String): String {
+    private suspend fun getLaunchActivity(packageName: String): String {
         val launchActivity = shell("dumpsys package $packageName -A 1 MAIN", 500)
         if (launchActivity.isBlank()) return ""
         val outLines = launchActivity.lines()
@@ -121,10 +127,91 @@ object DeviceOperate {
      * @param operation 操作类型（push或pull）
      * @param files 文件列表
      * @param targetPath 目标路径
-     * @param isWindows 是否windows平台
-     * @param isMacOs 是否macOS平台
-     * @param file 脚本文件
      */
+    private fun buildAdbCommand(
+        operation: String,
+        files: List<String>,
+        targetPath: String,
+        serialNumber: String
+    ): String {
+        return files
+            .map { localPath -> localPath to File(localPath).name }
+            .joinToString("\n") {
+                "${DeviceManager.adbPath.value} -s $serialNumber $operation ${it.first} \"$targetPath/${it.second}\""
+            }
+    }
+
+    private fun buildWindowsCommand(
+        adbCommand: String,
+        autoCloseEnabled: Boolean,
+        safeTimeout: Int,
+        file: File
+    ): String {
+        val commands = mutableListOf(
+            "@echo off",
+            "echo Starting file transfer...",
+            "chcp 65001",
+            adbCommand,
+            "echo.",
+            "echo $adbCommand"
+        )
+        if (autoCloseEnabled) {
+            commands.add("echo Window will close in $safeTimeout seconds...")
+            commands.add("timeout /t $safeTimeout /nobreak > nul")
+        }
+        file.writeText(commands.joinToString("\r\n"))
+        return if (autoCloseEnabled) {
+            "cmd.exe /c start cmd.exe /C ${file.absolutePath}"
+        } else {
+            "cmd.exe /c start cmd.exe /K ${file.absolutePath}"
+        }
+    }
+
+    private fun buildMacCommand(
+        adbCommand: String,
+        autoCloseEnabled: Boolean,
+        safeTimeout: Int,
+        file: File
+    ): String {
+        file.writeText(adbCommand)
+        val scriptPath = file.absolutePath
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+        val countdownSnippet = if (autoCloseEnabled) {
+            if (safeTimeout > 0) {
+                "for ((i=$safeTimeout;i>0;i--)); do echo \\\"Window will close in \${i}s...\\\"; sleep 1; done"
+            } else {
+                "echo \\\"Window will close now...\\\""
+            }
+        } else {
+            ""
+        }
+        val runLine = if (autoCloseEnabled) {
+            "do script \"bash \\\"$scriptPath\\\"; echo; $countdownSnippet\""
+        } else {
+            "do script \"bash \\\"$scriptPath\\\"\""
+        }
+        val appleScriptLines = buildList {
+            add("tell application \"Terminal\"")
+            add("activate")
+            add(runLine)
+            if (autoCloseEnabled) {
+                add("repeat while (busy of front window)")
+                add("delay 0.5")
+                add("end repeat")
+                add("try")
+                add("close front window")
+                add("end try")
+            }
+            add("end tell")
+        }
+        return "osascript ${toAppleScriptArgs(appleScriptLines)}"
+    }
+
+    private fun toAppleScriptArgs(lines: List<String>): String {
+        return lines.joinToString(" ") { "-e '${it.replace("'", "'\\''")}'" }
+    }
+
     private fun executeFileTransfer(
         operation: String,
         files: List<String>,
@@ -136,54 +223,15 @@ object DeviceOperate {
         file: File
     ) {
         device?.let { device ->
-            val adbCommand = files.map { file -> file to File(file).name }
-                .joinToString("\n") { "${DeviceManager.adbPath.value} -s ${device.serialNumber} $operation ${it.first} \"$targetPath/${it.second}\"" }
-
+            val adbCommand = buildAdbCommand(operation, files, targetPath, device.serialNumber)
             Log.d(TAG, "Original ADB command: $adbCommand")
-            var command = adbCommand
-
-            if (isWindows) {
-                val commands = mutableListOf<String>()
-                commands.add("@echo off")
-                commands.add("echo Starting file transfer...")
-                // utf-8 编码
-                commands.add("chcp 65001")
-                commands.add(adbCommand)
-                commands.add("echo.")
-                commands.add("echo Executing: $adbCommand")
-                if (autoCloseEnabled) {
-                    val safeTimeout = autoCloseTimeoutSeconds.coerceAtLeast(0)
-                    commands.add("echo Window will close in $safeTimeout seconds...")
-                    commands.add("timeout /t $safeTimeout /nobreak > nul")
-                }
-
-                file.writeText(commands.joinToString("\r\n"))
-                command = if (autoCloseEnabled) {
-                    "cmd.exe /c start cmd.exe /C ${file.absolutePath}"
-                } else {
-                    "cmd.exe /c start cmd.exe /K ${file.absolutePath}"
-                }
-            } else if (isMacOs) {
-                file.writeText(adbCommand)
-                command = if (autoCloseEnabled) {
-                    val safeTimeout = autoCloseTimeoutSeconds.coerceAtLeast(0)
-                    val scriptPath = file.absolutePath.replace("\"", "\\\"")
-                    val appleScript = """
-                        tell application "Terminal"
-                            do script "bash \"$scriptPath\""
-                            repeat while busy of front window
-                                delay 0.5
-                            end repeat
-                            delay $safeTimeout
-                            close front window
-                        end tell
-                    """.trimIndent()
-                    "osascript -e \"$appleScript\""
-                } else {
-                    "open -b com.apple.terminal ${file.absolutePath}"
-                }
+            val safeTimeout = autoCloseTimeoutSeconds.coerceAtLeast(0)
+            val command = when {
+                isWindows -> buildWindowsCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
+                isMacOs -> buildMacCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
+                else -> adbCommand
             }
-            CmdUtil.run(command)
+            if (isMacOs) CmdUtil.runShell(command) else CmdUtil.run(command)
         }
     }
 
@@ -434,8 +482,8 @@ object DeviceOperate {
 
         // 如果第一次解析失败（可能是旧版 top），尝试通用 `top -n 1` 格式
         if (processes.isEmpty()) {
-            val command = "top -n 1$postfix"
-            val fallbackResult = shell(command, 500)
+            val cmd = "top -n 1$postfix"
+            val fallbackResult = shell(cmd, 500)
             val fallbackColumns = fallbackResult.split("\n")
                 .firstOrNull { it.trim().startsWith("PID") }
                 ?.trim()
@@ -453,7 +501,7 @@ object DeviceOperate {
         return processes
     }
 
-    fun parseTopOutput(output: String, columns: List<String>): List<ProcessInfo> {
+    private fun parseTopOutput(output: String, columns: List<String>): List<ProcessInfo> {
         val lines = output.split("\n")
         var startIndex = 0
 
