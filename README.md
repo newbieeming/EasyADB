@@ -79,7 +79,6 @@ EasyADB 是一款桌面应用程序，旨在简化 Android 设备的管理和调
 ## 系统要求
 
 - macOS / Windows
-- Java Runtime Environment (JRE) 17 或更高版本
 - 已安装 ADB 工具（或使用应用内置 ADB）
 
 ## 构建项目
