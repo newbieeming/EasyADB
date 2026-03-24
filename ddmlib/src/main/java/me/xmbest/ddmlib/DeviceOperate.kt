@@ -161,9 +161,9 @@ object DeviceOperate {
         }
         file.writeText(commands.joinToString("\r\n"))
         return if (autoCloseEnabled) {
-            "cmd.exe /c start cmd.exe /C ${file.absolutePath}"
+            "cmd.exe /c start cmd.exe /C '${file.absolutePath}'"
         } else {
-            "cmd.exe /c start cmd.exe /K ${file.absolutePath}"
+            "cmd.exe /c start cmd.exe /K '${file.absolutePath}'"
         }
     }
 
