@@ -5,7 +5,7 @@ import com.android.ddmlib.IDevice
 sealed class NaviUiEvent {
     // 导航相关事件
     sealed class Navigation : NaviUiEvent() {
-        data class SelectLeftItem(val index: Int) : Navigation()
+        data class SelectDestination(val route: NaviRoute) : Navigation()
     }
 
     // 设备管理相关事件

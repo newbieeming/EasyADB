@@ -6,6 +6,8 @@ import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Toll
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewModelScope
 import com.android.ddmlib.IDevice
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +21,6 @@ import me.xmbest.cmdAutoCloseTimeoutSeconds
 import me.xmbest.ddmlib.DeviceManager
 import me.xmbest.ddmlib.DeviceOperate
 import me.xmbest.exec
-import me.xmbest.model.Page
 import me.xmbest.screen.app.AppScreen
 import me.xmbest.screen.customer.CustomerScreen
 import me.xmbest.screen.file.FileScreen
@@ -29,34 +30,39 @@ import org.jetbrains.skiko.hostOs
 import java.io.File
 
 class NaviViewModule : BaseViewModel<NaviUiState>() {
-    val pageList = listOf(
-        Page(
+    val destinations = listOf(
+        NaviDestination(
+            route = HomeRoute,
             name = getString("router.item.commonFeatures"),
-            Icons.Outlined.Category
+            icon = Icons.Outlined.Category
         ) {
             HomeScreen()
         },
-        Page(
-            getString("router.item.appManagement"),
-            Icons.Outlined.GridView
+        NaviDestination(
+            route = AppRoute,
+            name = getString("router.item.appManagement"),
+            icon = Icons.Outlined.GridView
         ) {
             AppScreen()
         },
-        Page(
-            getString("router.item.fileManagement"),
-            Icons.Outlined.FolderOpen
+        NaviDestination(
+            route = FileRoute,
+            name = getString("router.item.fileManagement"),
+            icon = Icons.Outlined.FolderOpen
         ) {
             FileScreen()
         },
-        Page(
-            getString("router.item.quickActions"),
-            Icons.Outlined.Toll
+        NaviDestination(
+            route = CustomerRoute,
+            name = getString("router.item.quickActions"),
+            icon = Icons.Outlined.Toll
         ) {
             CustomerScreen()
         },
-        Page(
-            getString("router.item.settings"),
-            Icons.Outlined.Settings
+        NaviDestination(
+            route = SettingsRoute,
+            name = getString("router.item.settings"),
+            icon = Icons.Outlined.Settings
         ) { SettingsScreen() }
     )
 
@@ -85,7 +91,7 @@ class NaviViewModule : BaseViewModel<NaviUiState>() {
 
     private fun handleNavigationEvent(event: NaviUiEvent.Navigation) {
         when (event) {
-            is NaviUiEvent.Navigation.SelectLeftItem -> selectLeftItem(event.index)
+            is NaviUiEvent.Navigation.SelectDestination -> selectDestination(event.route)
         }
     }
 
@@ -109,8 +115,8 @@ class NaviViewModule : BaseViewModel<NaviUiState>() {
         )
     }
 
-    private fun selectLeftItem(pageIndex: Int) {
-        _uiState.value = _uiState.value.copy(index = pageIndex)
+    private fun selectDestination(route: NaviRoute) {
+        _uiState.value = _uiState.value.copy(currentRoute = route)
     }
 
     private fun showDeviceList(show: Boolean) {
@@ -127,3 +133,10 @@ class NaviViewModule : BaseViewModel<NaviUiState>() {
     }
 
 }
+
+data class NaviDestination(
+    val route: NaviRoute,
+    val name: String,
+    val icon: ImageVector,
+    val content: @Composable () -> Unit
+)

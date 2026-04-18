@@ -27,6 +27,7 @@ dependencies {
     implementation("org.jetbrains.compose.material3:material3:${properties["material3.version"]}") // Material 3 组件
     implementation("org.jetbrains.compose.material:material-icons-extended:${properties["material.icons.extended.version"]}") // 扩展图标
     implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:${properties["lifecycle.viewmodel.compose.version"]}") // viewModule
+    implementation("org.jetbrains.androidx.navigation3:navigation3-ui:${properties["navigation3.version"]}") // Navigation3
 
     implementation("com.google.code.gson:gson:${properties["gson.version"]}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${properties["kotlin.version"]}")

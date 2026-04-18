@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.xmbest.base.BaseViewModel
+import me.xmbest.ddmlib.DeviceManager
 import me.xmbest.ddmlib.DeviceOperate
 import me.xmbest.ddmlib.DeviceOperate.clear
 import me.xmbest.ddmlib.DeviceOperate.forceStop
@@ -183,6 +184,7 @@ class AppViewModel : BaseViewModel<AppUiState>() {
 
     private fun loadPrecessList() {
         loadProcessJob?.cancel()
+        if (DeviceManager.device.value == null) return
         loadProcessJob = viewModelScope.launch(Dispatchers.IO) {
             val timeMillis = measureTimeMillis {
                 DeviceOperate.getProcessList(uiState.value.filter).let {

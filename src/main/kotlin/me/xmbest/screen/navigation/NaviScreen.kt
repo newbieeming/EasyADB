@@ -2,17 +2,7 @@
 
 package me.xmbest.screen.navigation
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.EaseInCubic
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.with
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
@@ -40,7 +30,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Phonelink
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -50,6 +42,9 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
 import me.xmbest.LocalDialogState
 import me.xmbest.LocalSnackbarHostState
 import me.xmbest.component.GlobalDialog
@@ -63,7 +58,7 @@ fun NaviScreen(viewModel: NaviViewModule = viewModel()) {
     val snackbarHostState = remember { SnackbarHostState() }
     val dialogState = remember { mutableStateOf(DialogState()) }
 
-    val dragTarget = remember(dialogState, uiState.index) {
+    val dragTarget = remember(dialogState, uiState.currentRoute) {
         object : DragAndDropTarget {
             override fun onDrop(event: DragAndDropEvent): Boolean {
                 return GlobalDragHandler.handleDrop(
@@ -95,7 +90,10 @@ fun NaviScreen(viewModel: NaviViewModule = viewModel()) {
                 )
             ) {
                 Left(modifier = Modifier.fillMaxHeight().width(240.dp), uiState)
-                Right(modifier = Modifier.fillMaxHeight().weight(1f), uiState)
+                Right(
+                    modifier = Modifier.fillMaxHeight().weight(1f),
+                    currentRoute = uiState.currentRoute
+                )
             }
         }
 
@@ -111,21 +109,22 @@ fun Left(
     Column(
         modifier.background(MaterialTheme.colors.background).padding(start = 12.dp, end = 12.dp)
     ) {
-        viewModel.pageList.forEachIndexed { index, item ->
+        viewModel.destinations.forEach { item ->
+            val selected = item.route == uiState.currentRoute
             Spacer(modifier = Modifier.height(8.dp))
             ListItem(
                 modifier = Modifier.height(44.dp).clip(RoundedCornerShape(8.dp)).background(
-                    if (index == uiState.index) MaterialTheme.colors.primary
+                    if (selected) MaterialTheme.colors.primary
                     else MaterialTheme.colors.background
                 ).clickable {
-                    viewModel.onEvent(NaviUiEvent.Navigation.SelectLeftItem(index))
+                    viewModel.onEvent(NaviUiEvent.Navigation.SelectDestination(item.route))
                 }, icon = {
                     Icon(
-                        item.icon, item.icon.name, tint = optionColor(index == uiState.index)
+                        item.icon, item.icon.name, tint = optionColor(selected)
                     )
                 }) {
                 Text(
-                    text = item.name, color = optionColor(index == uiState.index)
+                    text = item.name, color = optionColor(selected)
                 )
             }
         }
@@ -176,38 +175,39 @@ fun Left(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun Right(modifier: Modifier, uiState: NaviUiState, viewModel: NaviViewModule = viewModel()) {
-    Column(modifier.background(color = MaterialTheme.colors.secondary)) {
-        AnimatedContent(
-            targetState = uiState.index,
-            transitionSpec = {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioLowBouncy,
-                        stiffness = Spring.StiffnessHigh
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 250,
-                        delayMillis = 50
-                    )
-                ) with slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> -fullWidth / 3 },
-                    animationSpec = tween(
-                        durationMillis = 300,
-                        easing = EaseInCubic
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 200
-                    )
-                )
-            }
-        ) { targetIndex ->
-            viewModel.pageList[targetIndex].comp()
+fun Right(modifier: Modifier, currentRoute: NaviRoute, viewModel: NaviViewModule = viewModel()) {
+    val backStack = remember { mutableStateListOf(currentRoute) }
+    val destinationMap = remember(viewModel.destinations) {
+        viewModel.destinations.associateBy { it.route }
+    }
+
+    LaunchedEffect(currentRoute) {
+        when {
+           backStack.isEmpty() -> backStack.add(currentRoute)
+           backStack.last() != currentRoute -> backStack[backStack.lastIndex] = currentRoute
         }
     }
+
+    NavDisplay(
+        backStack = backStack,
+        onBack = {},
+        modifier = modifier.background(color = MaterialTheme.colors.secondary),
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator()
+        ),
+        entryProvider = { route ->
+            val destination = destinationMap[route]
+            if (destination == null) {
+                NavEntry(route) {
+                    Text(text = "Unknown route")
+                }
+            } else {
+                NavEntry(route) {
+                    destination.content()
+                }
+            }
+        }
+    )
 }
 
 @Composable

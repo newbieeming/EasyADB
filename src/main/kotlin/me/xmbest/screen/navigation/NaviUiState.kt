@@ -4,9 +4,9 @@ import com.android.ddmlib.IDevice
 
 data class NaviUiState(
     /**
-     * 当前选择item
+     * 当前页面
      */
-    val index: Int = 0,
+    val currentRoute: NaviRoute = HomeRoute,
     /**
      * 是否展示设备列表
      */
