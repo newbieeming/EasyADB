@@ -1,3 +1,5 @@
 -dontwarn java.lang.invoke.**
 -keep class com.sun.jna.** { *; }
 -keep class * implements com.sun.jna.** { *; }
+-keep class androidx.navigation3.** { *; }
+-keep class androidx.navigationevent.** { *; }
