@@ -17,7 +17,7 @@ import java.io.File
  * first 当前代码resource目录
  * second 写入的文件名称
  */
-val adb = Pair("adb", if (hostOs.isWindows) "adb.exe" else "adb")
+val adb = Pair("adb" + (if (hostOs.isMacOS) "${File.separator}mac" else if (hostOs.isLinux) "${File.separator}linux" else ""), if (hostOs.isWindows) "adb.exe" else "adb")
 val cfg = Pair("config", "config.json")
 val exec = Pair("sh", if (hostOs.isWindows) "exec.bat" else "exec.sh")
 

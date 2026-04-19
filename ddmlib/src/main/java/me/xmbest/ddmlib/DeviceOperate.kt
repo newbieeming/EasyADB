@@ -1,7 +1,6 @@
 package me.xmbest.ddmlib
 
 import com.android.ddmlib.FileListingService
-import com.android.ddmlib.InstallReceiver
 import com.android.ddmlib.MultiLineReceiver
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -10,6 +9,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.jetbrains.skiko.hostOs
 import java.awt.Image
 import java.io.File
 import kotlin.coroutines.resume
@@ -138,7 +138,7 @@ object DeviceOperate {
         return files
             .map { localPath -> localPath to File(localPath).name }
             .joinToString("\n") {
-                "${DeviceManager.adbPath.value} -s $serialNumber $operation \"${it.first}\" \"$targetPath/${it.second}\""
+                "${DeviceManager.adbExecutablePath.value} -s $serialNumber $operation \"${it.first}\" \"$targetPath/${it.second}\""
             }
     }
 
@@ -209,6 +209,53 @@ object DeviceOperate {
         return "osascript ${toAppleScriptArgs(appleScriptLines)}"
     }
 
+    private fun buildLinuxCommand(
+        adbCommand: String,
+        autoCloseEnabled: Boolean,
+        safeTimeout: Int,
+        file: File
+    ): String {
+        file.writeText(buildLinuxScript(adbCommand, autoCloseEnabled, safeTimeout))
+        file.setExecutable(true)
+        val scriptPath = shellSingleQuote(file.absolutePath)
+        val candidates = listOf(
+            "(command -v x-terminal-emulator >/dev/null 2>&1 && x-terminal-emulator -e bash '$scriptPath')",
+            "(command -v gnome-terminal >/dev/null 2>&1 && gnome-terminal -- bash '$scriptPath')",
+            "(command -v konsole >/dev/null 2>&1 && konsole -e bash '$scriptPath')",
+            "(command -v alacritty >/dev/null 2>&1 && alacritty -e bash '$scriptPath')",
+            "(command -v xterm >/dev/null 2>&1 && xterm -e bash '$scriptPath')"
+        )
+        return "${candidates.joinToString(" || ")} || bash '$scriptPath'"
+    }
+
+    private fun buildLinuxScript(
+        adbCommand: String,
+        autoCloseEnabled: Boolean,
+        safeTimeout: Int
+    ): String {
+        val lines = mutableListOf(
+            "#!/usr/bin/env bash",
+            "echo \"Starting file transfer...\"",
+            adbCommand,
+            "echo"
+        )
+        if (autoCloseEnabled) {
+            if (safeTimeout > 0) {
+                lines.add("for ((i=$safeTimeout;i>0;i--)); do echo \"Window will close in \${i}s...\"; sleep 1; done")
+            } else {
+                lines.add("echo \"Window will close now...\"")
+            }
+        } else {
+            lines.add("echo \"File transfer finished. Shell stays open.\"")
+            lines.add("exec bash")
+        }
+        return lines.joinToString("\n") + "\n"
+    }
+
+    private fun shellSingleQuote(value: String): String {
+        return value.replace("'", "'\"'\"'")
+    }
+
     private fun toAppleScriptArgs(lines: List<String>): String {
         return lines.joinToString(" ") { "-e '${it.replace("'", "'\\''")}'" }
     }
@@ -217,8 +264,6 @@ object DeviceOperate {
         operation: String,
         files: List<String>,
         targetPath: String,
-        isWindows: Boolean = true,
-        isMacOs: Boolean = false,
         autoCloseEnabled: Boolean = true,
         autoCloseTimeoutSeconds: Int = CMD_CLOSE_TIMEOUT,
         file: File
@@ -228,11 +273,12 @@ object DeviceOperate {
             Log.d(TAG, "Original ADB command: $adbCommand")
             val safeTimeout = autoCloseTimeoutSeconds.coerceAtLeast(0)
             val command = when {
-                isWindows -> buildWindowsCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
-                isMacOs -> buildMacCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
+                hostOs.isWindows -> buildWindowsCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
+                hostOs.isMacOS -> buildMacCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
+                hostOs.isLinux -> buildLinuxCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
                 else -> adbCommand
             }
-            if (isMacOs) CmdUtil.runShell(command) else CmdUtil.run(command)
+            if (hostOs.isWindows) CmdUtil.run(command) else CmdUtil.runShell(command)
         }
     }
 
@@ -240,15 +286,11 @@ object DeviceOperate {
      * push多个文件到系统
      * @param files 文件列表
      * @param remotePath 需要上传到位置
-     * @param isWindows 是否windows平台
-     * @param isMacOs 是否macOS平台
      * @param file 这里非windows需要传，即软件执行文件
      */
     fun push(
         files: List<String>,
         remotePath: String,
-        isWindows: Boolean = true,
-        isMacOs: Boolean = false,
         autoCloseEnabled: Boolean = true,
         autoCloseTimeoutSeconds: Int = CMD_CLOSE_TIMEOUT,
         file: File
@@ -257,8 +299,6 @@ object DeviceOperate {
             "push",
             files,
             remotePath,
-            isWindows,
-            isMacOs,
             autoCloseEnabled,
             autoCloseTimeoutSeconds,
             file
@@ -269,15 +309,11 @@ object DeviceOperate {
      * pull多个文件到本地
      * @param files 文件列表
      * @param localPath 本地路径
-     * @param isWindows 是否windows平台
-     * @param isMacOs 是否macOS平台
      * @param file 这里非windows需要传，即软件执行文件
      */
     fun pull(
         files: List<String>,
         localPath: String,
-        isWindows: Boolean = true,
-        isMacOs: Boolean = false,
         autoCloseEnabled: Boolean = true,
         autoCloseTimeoutSeconds: Int = CMD_CLOSE_TIMEOUT,
         file: File
@@ -286,8 +322,6 @@ object DeviceOperate {
             "pull",
             files,
             localPath,
-            isWindows,
-            isMacOs,
             autoCloseEnabled,
             autoCloseTimeoutSeconds,
             file
@@ -301,23 +335,22 @@ object DeviceOperate {
      */
     fun install(
         remoteFilePath: String,
-        isWindows: Boolean = true,
-        isMacOs: Boolean = false,
         autoCloseTimeoutSeconds: Int = CMD_CLOSE_TIMEOUT,
         autoCloseEnabled: Boolean = true,
         file: File
     ) {
         device?.let {
             val adbCommand =
-                "${DeviceManager.adbPath.value} -s ${it.serialNumber} install \"${remoteFilePath}\""
+                "${DeviceManager.adbExecutablePath.value} -s ${it.serialNumber} install \"${remoteFilePath}\""
             Log.d(TAG, "Original ADB command: $adbCommand")
             val safeTimeout = autoCloseTimeoutSeconds.coerceAtLeast(0)
             val command = when {
-                isWindows -> buildWindowsCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
-                isMacOs -> buildMacCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
+                hostOs.isWindows -> buildWindowsCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
+                hostOs.isMacOS -> buildMacCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
+                hostOs.isLinux -> buildLinuxCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
                 else -> adbCommand
             }
-            if (isMacOs) CmdUtil.runShell(command) else CmdUtil.run(command)
+            if (hostOs.isWindows) CmdUtil.run(command) else CmdUtil.runShell(command)
         }
     }
 
@@ -378,7 +411,7 @@ object DeviceOperate {
     }
 
     fun tcpip(port: Int = 5555) {
-        CmdUtil.run("${DeviceManager.adbPath.value} -s ${device?.serialNumber} tcpip $port")
+        CmdUtil.run("${DeviceManager.adbExecutablePath.value} -s ${device?.serialNumber} tcpip $port")
     }
 
     /**

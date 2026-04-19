@@ -26,7 +26,6 @@ import me.xmbest.screen.customer.CustomerScreen
 import me.xmbest.screen.file.FileScreen
 import me.xmbest.screen.home.HomeScreen
 import me.xmbest.screen.settings.SettingsScreen
-import org.jetbrains.skiko.hostOs
 import java.io.File
 
 class NaviViewModule : BaseViewModel<NaviUiState>() {
@@ -107,8 +106,6 @@ class NaviViewModule : BaseViewModel<NaviUiState>() {
     private fun install(path: String) {
         DeviceOperate.install(
             remoteFilePath = path,
-            isWindows = hostOs.isWindows,
-            isMacOs = hostOs.isMacOS,
             autoCloseEnabled = cmdAutoCloseEnabled,
             autoCloseTimeoutSeconds = cmdAutoCloseTimeoutSeconds,
             file = File(appStorageAbsolutePath, exec.second)

@@ -26,15 +26,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.xmbest.FILE_SPLIT
 import me.xmbest.appStorageAbsolutePath
+import me.xmbest.base.BaseViewModel
 import me.xmbest.cmdAutoCloseEnabled
 import me.xmbest.cmdAutoCloseTimeoutSeconds
-import me.xmbest.base.BaseViewModel
 import me.xmbest.ddmlib.DeviceOperate
 import me.xmbest.ddmlib.FileManager
 import me.xmbest.ddmlib.Log
 import me.xmbest.exec
 import me.xmbest.util.PreferencesUtil
-import org.jetbrains.skiko.hostOs
 import java.io.File
 import java.text.DecimalFormat
 
@@ -333,8 +332,6 @@ class FileViewModel : BaseViewModel<FileUiState>() {
             DeviceOperate.push(
                 files = files,
                 remotePath = remotePath,
-                isWindows = hostOs.isWindows,
-                isMacOs = hostOs.isMacOS,
                 autoCloseEnabled = cmdAutoCloseEnabled,
                 autoCloseTimeoutSeconds = cmdAutoCloseTimeoutSeconds,
                 file = File(appStorageAbsolutePath, exec.second)
@@ -352,8 +349,6 @@ class FileViewModel : BaseViewModel<FileUiState>() {
             DeviceOperate.pull(
                 files = files.map { it.absolutePath },
                 localPath = localPath,
-                isWindows = hostOs.isWindows,
-                isMacOs = hostOs.isMacOS,
                 autoCloseEnabled = cmdAutoCloseEnabled,
                 autoCloseTimeoutSeconds = cmdAutoCloseTimeoutSeconds,
                 file = File(appStorageAbsolutePath, exec.second)
