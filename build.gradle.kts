@@ -9,9 +9,9 @@ plugins {
 }
 
 group = "me.xmbet"
-version = "1.0.2"
+version = "1.0.3"
 val appName by extra("EasyADB")
-val appVersion by extra("1.0.2")
+val appVersion by extra("1.0.3")
 
 repositories {
     mavenLocal()

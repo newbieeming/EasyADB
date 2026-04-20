@@ -150,12 +150,17 @@ object DeviceOperate {
     ): String {
         val commands = mutableListOf(
             "@echo off",
-            "echo Starting file transfer...",
-            "chcp 65001",
-            adbCommand,
-            "echo.",
-            "echo $adbCommand"
+            "chcp 65001"
         )
+        // 将多行命令分别显示
+        adbCommand.lines().forEach { line ->
+            if (line.isNotBlank()) {
+                commands.add("echo $line")
+            }
+        }
+        commands.add("echo.")
+        commands.add(adbCommand)
+        commands.add("echo.")
         if (autoCloseEnabled) {
             commands.add("echo Window will close in $safeTimeout seconds...")
             commands.add("timeout /t $safeTimeout /nobreak > nul")
@@ -174,7 +179,18 @@ object DeviceOperate {
         safeTimeout: Int,
         file: File
     ): String {
-        file.writeText(adbCommand)
+        val scriptContent = buildList {
+            adbCommand.lines().forEach { line ->
+                if (line.isNotBlank()) {
+                    add("echo '${line.replace("'", "'\\''")}' ")
+                }
+            }
+            add("echo")
+            add(adbCommand)
+            add("echo")
+        }.joinToString("\n")
+
+        file.writeText(scriptContent)
         val scriptPath = file.absolutePath
             .replace("\\", "\\\\")
             .replace("\"", "\\\"")
@@ -235,10 +251,15 @@ object DeviceOperate {
     ): String {
         val lines = mutableListOf(
             "#!/usr/bin/env bash",
-            "echo \"Starting file transfer...\"",
-            adbCommand,
-            "echo"
         )
+        adbCommand.lines().forEach { line ->
+            if (line.isNotBlank()) {
+                lines.add("echo '${line.replace("'", "'\\''")}' ")
+            }
+        }
+        lines.add("echo")
+        lines.add(adbCommand)
+        lines.add("echo")
         if (autoCloseEnabled) {
             if (safeTimeout > 0) {
                 lines.add("for ((i=$safeTimeout;i>0;i--)); do echo \"Window will close in \${i}s...\"; sleep 1; done")
@@ -270,7 +291,7 @@ object DeviceOperate {
     ) {
         device?.let { device ->
             val adbCommand = buildAdbCommand(operation, files, targetPath, device.serialNumber)
-            Log.d(TAG, "Original ADB command: $adbCommand")
+            Log.d(TAG, "ADB $operation command:\n$adbCommand")
             val safeTimeout = autoCloseTimeoutSeconds.coerceAtLeast(0)
             val command = when {
                 hostOs.isWindows -> buildWindowsCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
@@ -342,7 +363,7 @@ object DeviceOperate {
         device?.let {
             val adbCommand =
                 "${DeviceManager.adbExecutablePath.value} -s ${it.serialNumber} install \"${remoteFilePath}\""
-            Log.d(TAG, "Original ADB command: $adbCommand")
+            Log.d(TAG, "ADB install command: $adbCommand")
             val safeTimeout = autoCloseTimeoutSeconds.coerceAtLeast(0)
             val command = when {
                 hostOs.isWindows -> buildWindowsCommand(adbCommand, autoCloseEnabled, safeTimeout, file)
