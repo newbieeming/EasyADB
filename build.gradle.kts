@@ -9,9 +9,9 @@ plugins {
 }
 
 group = "me.newbieeming"
-version = "1.0.3"
+version = "1.0.4"
 val appName by extra("EasyADB")
-val appVersion by extra("1.0.3")
+val appVersion by extra("1.0.4")
 
 repositories {
     mavenLocal()
