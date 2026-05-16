@@ -144,7 +144,7 @@ cd EasyADB
 
 ```
 EasyADB/
-├── src/main/kotlin/me/xmbest/
+├── src/main/kotlin/me/newbieeming/
 │   ├── Main.kt                    # 应用入口
 │   ├── Config.kt                  # 全局配置和状态管理
 │   ├── screen/                    # UI 界面
@@ -159,7 +159,7 @@ EasyADB/
 │   ├── util/                      # 工具函数
 │   └── locale/                    # 国际化
 ├── ddmlib/                        # ADB 封装库
-│   └── src/main/java/me/xmbest/ddmlib/
+│   └── src/main/java/me/newbieeming/ddmlib/
 │       ├── DeviceManager.kt       # 设备连接管理
 │       ├── DeviceOperate.kt       # 设备操作
 │       ├── FileManager.kt         # 文件传输
