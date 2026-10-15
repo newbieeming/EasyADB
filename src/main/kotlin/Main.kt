@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,6 +18,14 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingWindow
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.FrameWindowScope
@@ -39,6 +48,8 @@ import me.newbieeming.util.PreferencesUtil
 import me.newbieeming.util.PreferencesUtil.PREFERENCES_LOADING_MIN_DURATION_MS
 import me.newbieeming.util.WindowsTitleBarUtil
 import org.jetbrains.skiko.hostOs
+import java.awt.Desktop
+import java.awt.desktop.AppReopenedListener
 import kotlin.time.Duration.Companion.milliseconds
 
 private val macTitleBarHeight = 28.dp
@@ -106,17 +117,42 @@ fun main() {
         ErrorLogger.log(throwable)
     }
     application {
-        val windowState = Config.windowState.collectAsState()
+        val windowState by Config.windowState.collectAsState()
         val viewModelStore = remember { ViewModelStore() }
         val viewModelStoreOwner = remember {
             object : ViewModelStoreOwner {
                 override val viewModelStore: ViewModelStore = viewModelStore
             }
         }
+        var isWindowVisible by remember { mutableStateOf(true) }
+
         SwingWindow(
             title = "EasyADB",
-            onCloseRequest = ::exitApplication,
-            state = windowState.value,
+            visible = isWindowVisible,
+            onCloseRequest = {
+                if (hostOs.isWindows) {
+                    exitApplication()
+                } else {
+                    isWindowVisible = false
+                }
+            },
+            onPreviewKeyEvent = { keyEvent ->
+                val shouldMinimize = keyEvent.type == KeyEventType.KeyDown &&
+                        keyEvent.key == Key.W &&
+                        !keyEvent.isAltPressed &&
+                        !keyEvent.isShiftPressed &&
+                        when {
+                            hostOs.isMacOS -> keyEvent.isMetaPressed && !keyEvent.isCtrlPressed
+                            hostOs.isWindows -> keyEvent.isCtrlPressed && !keyEvent.isMetaPressed
+                            else -> false
+                        }
+
+                if (shouldMinimize) {
+                    windowState.isMinimized = true
+                }
+                shouldMinimize
+            },
+            state = windowState,
             icon = painterResource("icon/logo.ico"),
             init = { window ->
                 if (hostOs.isMacOS) {
@@ -125,8 +161,25 @@ fun main() {
                 }
             },
         ) {
+            if (hostOs.isMacOS) {
+                DisposableEffect(window) {
+                    val desktop = Desktop.getDesktop()
+                    val listener = AppReopenedListener {
+                        isWindowVisible = true
+                        windowState.isMinimized = false
+                        window.isVisible = true
+                        window.toFront()
+                        window.requestFocus()
+                    }
+                    desktop.addAppEventListener(listener)
+                    onDispose {
+                        desktop.removeAppEventListener(listener)
+                    }
+                }
+            }
+
             LaunchedEffect(Unit) {
-                snapshotFlow { windowState.value.size }
+                snapshotFlow { windowState.size }
                     .distinctUntilChanged()
                     .collect { sizeDp ->
                         println("width: ${sizeDp.width.value},height: ${sizeDp.height.value}")
