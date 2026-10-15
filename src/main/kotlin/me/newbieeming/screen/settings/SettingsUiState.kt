@@ -12,4 +12,5 @@ data class SettingsUiState(
     val cmdAutoCloseTimeoutSeconds: Int,
     val titleBarAlpha: Float,
     val loadingMinDurationMs: Int,
+    val keepRunningOnClose: Boolean,
 )

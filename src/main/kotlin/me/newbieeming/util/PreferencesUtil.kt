@@ -49,6 +49,11 @@ object PreferencesUtil {
     const val PREFERENCES_LOADING_MIN_DURATION_MS = "settings.loading_min_duration_ms"
 
     /**
+     * 关闭窗口后继续运行
+     */
+    const val PREFERENCES_KEEP_RUNNING_ON_CLOSE = "settings.window.keep_running_on_close"
+
+    /**
      * 窗口大小模式
      */
     const val PREFERENCES_WINDOW_SIZE_MODE = "settings.window_size.mode"

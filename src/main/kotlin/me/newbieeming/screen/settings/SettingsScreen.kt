@@ -165,6 +165,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
 
             OtherSettingsSection(
                 title = viewModel.getString("settings.other"),
+                keepRunningOnCloseLabel = viewModel.getString("settings.window.keepRunningOnClose"),
                 screenshotEnableLabel = viewModel.getString("settings.screenshot.save.enable"),
                 screenshotPathLabel = viewModel.getString("settings.screenshot.save.path"),
                 cmdAutoCloseEnableLabel = viewModel.getString("settings.cmd.autoClose.enable"),
@@ -176,11 +177,15 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
                 clearDataMessage = viewModel.getString("settings.clearData.confirm.message"),
                 confirmLabel = viewModel.getString("button.confirm"),
                 cancelLabel = viewModel.getString("button.cancel"),
+                keepRunningOnClose = uiState.keepRunningOnClose,
                 screenshotSaveEnabled = uiState.screenshotSaveEnabled,
                 screenshotSavePath = uiState.screenshotSavePath,
                 cmdAutoCloseEnabled = uiState.cmdAutoCloseEnabled,
                 cmdAutoCloseTimeout = cmdAutoCloseTimeout,
                 loadingMinDuration = loadingMinDuration,
+                onKeepRunningOnCloseChange = { enabled ->
+                    viewModel.onEvent(SettingsUiEvent.WindowSettings.UpdateKeepRunningOnClose(enabled))
+                },
                 onScreenshotEnabledChange = { enabled ->
                     viewModel.onEvent(
                         SettingsUiEvent.ScreenshotSettings.UpdateScreenshotSaveEnabled(
@@ -203,9 +208,15 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
             )
         }
 
-        Box(
-            modifier = Modifier.fillMaxSize().padding(10.dp), contentAlignment = Alignment.BottomEnd
+        Row(
+            modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
+            Text(
+                text = viewModel.getString("settings.version"),
+                color = MaterialTheme.colors.onBackground
+            )
             Text(
                 text = Config.buildVersion,
                 color = MaterialTheme.colors.onBackground
@@ -217,6 +228,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
 @Composable
 private fun OtherSettingsSection(
     title: String,
+    keepRunningOnCloseLabel: String,
     screenshotEnableLabel: String,
     screenshotPathLabel: String,
     cmdAutoCloseEnableLabel: String,
@@ -228,11 +240,13 @@ private fun OtherSettingsSection(
     clearDataMessage: String,
     confirmLabel: String,
     cancelLabel: String,
+    keepRunningOnClose: Boolean,
     screenshotSaveEnabled: Boolean,
     screenshotSavePath: String,
     cmdAutoCloseEnabled: Boolean,
     cmdAutoCloseTimeout: String,
     loadingMinDuration: String,
+    onKeepRunningOnCloseChange: (Boolean) -> Unit,
     onScreenshotEnabledChange: (Boolean) -> Unit,
     onScreenshotPathChange: () -> Unit,
     onCmdAutoCloseEnabledChange: (Boolean) -> Unit,
@@ -246,6 +260,15 @@ private fun OtherSettingsSection(
         modifier = Modifier.fillMaxWidth().padding(start = 6.dp, top = 6.dp)
     ) {
         Column {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Text(text = keepRunningOnCloseLabel, color = MaterialTheme.colors.onBackground)
+                Switch(checked = keepRunningOnClose, onCheckedChange = onKeepRunningOnCloseChange)
+            }
+
             ScreenshotSaveSection(
                 enableLabel = screenshotEnableLabel,
                 pathLabel = screenshotPathLabel,

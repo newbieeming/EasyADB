@@ -26,6 +26,7 @@ import me.newbieeming.util.PreferencesUtil.PREFERENCES_CMD_AUTO_CLOSE_ENABLED
 import me.newbieeming.util.PreferencesUtil.PREFERENCES_CMD_AUTO_CLOSE_TIMEOUT
 import me.newbieeming.util.PreferencesUtil.PREFERENCES_CUSTOMER_ADB_PATH
 import me.newbieeming.util.PreferencesUtil.PREFERENCES_LOADING_MIN_DURATION_MS
+import me.newbieeming.util.PreferencesUtil.PREFERENCES_KEEP_RUNNING_ON_CLOSE
 import me.newbieeming.util.PreferencesUtil.PREFERENCES_SCREENSHOT_SAVE_ENABLED
 import me.newbieeming.util.PreferencesUtil.PREFERENCES_SCREENSHOT_SAVE_PATH
 import me.newbieeming.util.PreferencesUtil.PREFERENCES_THEME
@@ -48,6 +49,7 @@ class SettingsViewModel : BaseViewModel<SettingsUiState>() {
                 PreferencesUtil.get(PREFERENCES_CMD_AUTO_CLOSE_TIMEOUT, 3),
                 PreferencesUtil.get(PREFERENCES_TITLE_BAR_ALPHA, 0.8f),
                 PreferencesUtil.get(PREFERENCES_LOADING_MIN_DURATION_MS, 500),
+                PreferencesUtil.get(PREFERENCES_KEEP_RUNNING_ON_CLOSE, false),
             )
         )
 
@@ -74,6 +76,7 @@ class SettingsViewModel : BaseViewModel<SettingsUiState>() {
                 is SettingsUiEvent.TerminalSettings -> handleTerminalSettingsEvent(event)
                 is SettingsUiEvent.TitleBarSettings -> handleTitleBarSettingsEvent(event)
                 is SettingsUiEvent.LoadingSettings -> handleLoadingSettingsEvent(event)
+                is SettingsUiEvent.WindowSettings -> handleWindowSettingsEvent(event)
                 is SettingsUiEvent.DataManagement -> handleDataManagementEvent(event)
             }
         }
@@ -115,6 +118,12 @@ class SettingsViewModel : BaseViewModel<SettingsUiState>() {
         when (event) {
             is SettingsUiEvent.TerminalSettings.UpdateCmdAutoCloseEnabled -> changeCmdAutoCloseEnabled(event.enabled)
             is SettingsUiEvent.TerminalSettings.UpdateCmdAutoCloseTimeout -> changeCmdAutoCloseTimeout(event.seconds)
+        }
+    }
+
+    private fun handleWindowSettingsEvent(event: SettingsUiEvent.WindowSettings) {
+        when (event) {
+            is SettingsUiEvent.WindowSettings.UpdateKeepRunningOnClose -> changeKeepRunningOnClose(event.enabled)
         }
     }
 
@@ -170,6 +179,11 @@ class SettingsViewModel : BaseViewModel<SettingsUiState>() {
         val safeMs = ms.coerceAtLeast(0)
         PreferencesUtil.set(PREFERENCES_LOADING_MIN_DURATION_MS, safeMs)
         _uiState.value = _uiState.value.copy(loadingMinDurationMs = safeMs)
+    }
+
+    private fun changeKeepRunningOnClose(enabled: Boolean) {
+        PreferencesUtil.set(PREFERENCES_KEEP_RUNNING_ON_CLOSE, enabled)
+        _uiState.value = _uiState.value.copy(keepRunningOnClose = enabled)
     }
 
     private fun changeScreenshotSaveEnabled(enabled: Boolean) {
