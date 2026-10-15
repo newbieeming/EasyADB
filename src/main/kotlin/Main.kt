@@ -46,6 +46,7 @@ import me.newbieeming.screen.navigation.NaviScreen
 import me.newbieeming.util.ErrorLogger
 import me.newbieeming.util.PreferencesUtil
 import me.newbieeming.util.PreferencesUtil.PREFERENCES_LOADING_MIN_DURATION_MS
+import me.newbieeming.util.PreferencesUtil.PREFERENCES_KEEP_RUNNING_ON_CLOSE
 import me.newbieeming.util.WindowsTitleBarUtil
 import org.jetbrains.skiko.hostOs
 import java.awt.Desktop
@@ -130,10 +131,10 @@ fun main() {
             title = "EasyADB",
             visible = isWindowVisible,
             onCloseRequest = {
-                if (hostOs.isWindows) {
-                    exitApplication()
-                } else {
+                if (PreferencesUtil.get(PREFERENCES_KEEP_RUNNING_ON_CLOSE, true)) {
                     isWindowVisible = false
+                } else {
+                    exitApplication()
                 }
             },
             onPreviewKeyEvent = { keyEvent ->

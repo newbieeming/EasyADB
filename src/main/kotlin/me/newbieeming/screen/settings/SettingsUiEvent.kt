@@ -37,6 +37,11 @@ sealed class SettingsUiEvent {
         data class UpdateLoadingMinDuration(val ms: Int) : LoadingSettings()
     }
 
+    // 窗口设置相关事件
+    sealed class WindowSettings : SettingsUiEvent() {
+        data class UpdateKeepRunningOnClose(val enabled: Boolean) : WindowSettings()
+    }
+
     // 数据管理相关事件
     sealed class DataManagement : SettingsUiEvent() {
         data object ClearData : DataManagement()
