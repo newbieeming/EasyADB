@@ -137,7 +137,7 @@ fun main() {
                 }
             },
             onPreviewKeyEvent = { keyEvent ->
-                val shouldMinimize = keyEvent.type == KeyEventType.KeyDown &&
+                val isCloseShortcut = keyEvent.type == KeyEventType.KeyDown &&
                         keyEvent.key == Key.W &&
                         !keyEvent.isAltPressed &&
                         !keyEvent.isShiftPressed &&
@@ -147,10 +147,14 @@ fun main() {
                             else -> false
                         }
 
-                if (shouldMinimize) {
-                    windowState.isMinimized = true
+                if (isCloseShortcut) {
+                    if (hostOs.isMacOS) {
+                        isWindowVisible = false
+                    } else {
+                        windowState.isMinimized = true
+                    }
                 }
-                shouldMinimize
+                isCloseShortcut
             },
             state = windowState,
             icon = painterResource("icon/logo.ico"),
